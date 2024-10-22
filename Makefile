@@ -1,11 +1,11 @@
-# Copyright 2023 KubeCub. All rights reserved.
+# Copyright 2023 telepace. All rights reserved.
 # Use of this source code is governed by a MIT style
 # license that can be found in the LICENSE file.
 
 ###################################=> common commands <=#############################################
 # ========================== Capture Environment ===============================
 # get the repo root and output path
-ROOT_PACKAGE=github.com/kubecub/go-project-layout
+ROOT_PACKAGE=github.com/telepace/voiceflow
 OUT_DIR=$(REPO_ROOT)/_output
 # ==============================================================================
 
@@ -57,7 +57,7 @@ ifeq (, $(shell git status --porcelain 2>/dev/null))
 endif
 GIT_COMMIT:=$(shell git rev-parse HEAD)
 
-IMG ?= ghcr.io/kubecub/go-project-layout:latest
+IMG ?= ghcr.io/telepace/voiceflow:latest
 
 BUILDFILE = "./main.go"
 BUILDAPP = "$(OUTPUT_DIR)/"
@@ -115,7 +115,7 @@ SPACE +=
 # ==============================================================================
 # Build definition
 
-GO_SUPPORTED_VERSIONS ?= 1.18|1.19|1.20
+GO_MINIMUM_VERSION ?= 1.19
 GO_LDFLAGS += -X $(VERSION_PACKAGE).GitVersion=$(VERSION) \
 	-X $(VERSION_PACKAGE).GitCommit=$(GIT_COMMIT) \
 	-X $(VERSION_PACKAGE).GitTreeState=$(GIT_TREE_STATE) \
@@ -139,7 +139,7 @@ ifeq ($(origin GOBIN), undefined)
 	GOBIN := $(GOPATH)/bin
 endif
 
-COMMANDS ?= $(filter-out %.md, $(wildcard ${ROOT_DIR}/cmd/*.go))
+COMMANDS ?= $(filter-out %.md, $(wildcard ${ROOT_DIR}/cmd/*/*.go))
 BINS ?= $(foreach cmd,${COMMANDS},$(notdir ${cmd}))
 
 ifeq (${COMMANDS},)
@@ -149,7 +149,7 @@ ifeq (${BINS},)
   $(error Could not determine BINS, set ROOT_DIR or run in source dir)
 endif
 
-EXCLUDE_TESTS=github.com/kubecub/CloudBuildAI/test
+EXCLUDE_TESTS=github.com/telepace/CloudBuildAI/test
 
 # ==============================================================================
 # Build
@@ -170,9 +170,10 @@ build.%:
 
 .PHONY: go.build.verify
 go.build.verify:
-ifneq ($(shell $(GO) version | grep -q -E '\bgo($(GO_SUPPORTED_VERSIONS))\b' && echo 0 || echo 1), 0)
-	$(error unsupported go version. Please make install one of the following supported version: '$(GO_SUPPORTED_VERSIONS)')
+ifneq ($(shell $(GO) version|awk -v min=$(GO_MINIMUM_VERSION) '{gsub(/go/,"",$$3);if($$3 >= min){print 0}else{print 1}}'), 0)
+	$(error unsupported go version. Please install a go version which is greater than or equal to '$(GO_MINIMUM_VERSION)')
 endif
+
 
 ## go.build: Build the binary file of the specified platform.
 .PHONY: go.build.%
@@ -261,7 +262,7 @@ copyright-verify: tools.verify.addlicense copyright-add
 .PHONY: copyright-add
 copyright-add: tools.verify.addlicense
 	@echo "===========> Adding $(LICENSE_TEMPLATE) the boilerplate headers for all files"
-	@$(TOOLS_DIR)/addlicense -y $(shell date +"%Y") -v -c "KubeCub open source community." -f $(LICENSE_TEMPLATE) $(CODE_DIRS)
+	@$(TOOLS_DIR)/addlicense -y $(shell date +"%Y") -v -c "telepace open source community." -f $(LICENSE_TEMPLATE) $(CODE_DIRS)
 	@echo "===========> End the copyright is added..."
 
 ## swagger: Generate swagger document.

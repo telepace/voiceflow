@@ -1,4 +1,4 @@
-# Copyright © 2023 KubeCub open source community. All rights reserved.
+# Copyright © 2023 telepace open source community. All rights reserved.
 # Licensed under the MIT License (the "License");
 # you may not use this file except in compliance with the License.
 
@@ -7,13 +7,13 @@ description: Suggest and idea for this project
 title: "Feature: <Feature Request Title>"
 labels: ["kind/feature"]
 assignees:
-  - kubecub/maintainers
+  - telepace/maintainers
 body:
   - type: markdown
     attributes:
       value: |
         Thank you for initiating this feature request !🤗 
-        Expected contribution?   📖 Read our [contributor documentation](https://github.com/kubecub/Open-IM-Server/blob/main/CONTRIBUTING.md) 
+        Expected contribution?   📖 Read our [contributor documentation](https://github.com/telepace/Open-IM-Server/blob/main/CONTRIBUTING.md) 
   
   - type: checkboxes
     id: checklist
@@ -23,7 +23,7 @@ body:
       options:
         - label: I've searched for similar issues and couldn't find anything matching
           required: true
-        - label: I've discussed this feature request in the [kubecub Slack](https://join.slack.com/t/kubecub/shared_invite/zt-1se0k2bae-lkYzz0_T~BYh3rjkvlcUqQ) and got positive feedback
+        - label: I've discussed this feature request in the [telepace Slack](https://join.slack.com/t/telepace/shared_invite/zt-1se0k2bae-lkYzz0_T~BYh3rjkvlcUqQ) and got positive feedback
           required: true
 
   - type: dropdown

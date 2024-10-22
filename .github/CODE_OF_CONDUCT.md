@@ -4,42 +4,42 @@ We divide the problem into security and general problems:
 
 #### Reporting security issues
 
-Security issues are always treated seriously. As our usual principle, we discourage anyone to spread security issues. If you find a security issue of kubecub, please do not discuss it in public and even do not open a public issue.
+Security issues are always treated seriously. As our usual principle, we discourage anyone to spread security issues. If you find a security issue of telepace, please do not discuss it in public and even do not open a public issue.
 
 Instead we encourage you to send us a private email to [3293172751nss@gmail.com](mailto:3293172751nss@gmail.com) to report this.
 
 #### Reporting general issues
 
-To be honest, we regard every user of kubecubas a very kind contributor. After experiencing kubecub, you may have some feedback for the project. Then feel free to open an issue via [NEW ISSUE](https://github.com/kubecub/kubecub/issues/new/choose).
+To be honest, we regard every user of telepaceas a very kind contributor. After experiencing telepace, you may have some feedback for the project. Then feel free to open an issue via [NEW ISSUE](https://github.com/telepace/telepace/issues/new/choose).
 
-Since we collaborate project kubecub in a distributed way, we appreciate **WELL-WRITTEN**, **DETAILED**, **EXPLICIT** issue reports. To make the communication more efficient, we wish everyone could search if your issue is an existing one in the searching list. If you find it existing, please add your details in comments under the existing issue instead of opening a brand new one.
+Since we collaborate project telepace in a distributed way, we appreciate **WELL-WRITTEN**, **DETAILED**, **EXPLICIT** issue reports. To make the communication more efficient, we wish everyone could search if your issue is an existing one in the searching list. If you find it existing, please add your details in comments under the existing issue instead of opening a brand new one.
 
-To make the issue details as standard as possible, we setup an [ISSUE TEMPLATE](https://github.com/kubecub/kubecub/tree/main/.github/ISSUE_TEMPLATE) for issue reporters. You can find three kinds of issue templates there: question, bug report and feature request. Please **BE SURE** to follow the instructions to fill fields in template.
+To make the issue details as standard as possible, we setup an [ISSUE TEMPLATE](https://github.com/telepace/telepace/tree/main/.github/ISSUE_TEMPLATE) for issue reporters. You can find three kinds of issue templates there: question, bug report and feature request. Please **BE SURE** to follow the instructions to fill fields in template.
 
 **There are a lot of cases when you could open an issue:**
 
 + bug report
 + feature request
-+ kubecub performance issues 
++ telepace performance issues 
 + feature proposal
 + feature design
 + help wanted
 + doc incomplete
 + test improvement
-+ any questions on kubecub project 
++ any questions on telepace project 
 + and so on 
 
-Also, we must be reminded when submitting a new question about kubecub, please remember to remove the sensitive data from your post. Sensitive data could be password, secret key, network locations, private business data and so on.
+Also, we must be reminded when submitting a new question about telepace, please remember to remove the sensitive data from your post. Sensitive data could be password, secret key, network locations, private business data and so on.
 
 #### Commit Rules
 
-Actually in kubecub, we take two rules serious when committing:
+Actually in telepace, we take two rules serious when committing:
 
 **🥇 Commit Message:**
 
 Commit message could help reviewers better understand what the purpose of submitted PR is. It could help accelerate the code review procedure as well. We encourage contributors to use **EXPLICIT** commit message rather than ambiguous message. In general, we advocate the following commit message type:
 
-We use [Semantic Commits](https://www.conventionalcommits.org/en/v1.0.0/) to make it easier to understand what a commit does and to build pretty change kubecub. Please use the following prefixes for your commits:
+We use [Semantic Commits](https://www.conventionalcommits.org/en/v1.0.0/) to make it easier to understand what a commit does and to build pretty change telepace. Please use the following prefixes for your commits:
 
 + `docs: xxxx`. For example, "docs: add docs about storage installation".
 + `feature: xxxx`.For example, "feature: make result show in sorted order".
@@ -76,9 +76,9 @@ An example for this could be:
 
 #### PR Description
 
-PR is the only way to make change to kubecub project files. To help reviewers better get your purpose, PR description could not be too detailed. We encourage contributors to follow the [PR template](https://github.com/kubecub) to finish the pull request.
+PR is the only way to make change to telepace project files. To help reviewers better get your purpose, PR description could not be too detailed. We encourage contributors to follow the [PR template](https://github.com/telepace) to finish the pull request.
 
-You can find some very formal PR in [RFC](https://github.com/kubecub/kubecub/issues) issues and learn about them.
+You can find some very formal PR in [RFC](https://github.com/telepace/telepace/issues) issues and learn about them.
 
 **📖 Opening PRs:**
 
@@ -124,12 +124,12 @@ git() {
 
 #### Docs Contribution
 
-The documentation for kubecub includes:
+The documentation for telepace includes:
 
-+ [README.md](https://github.com/kubecub/community/blob/main/README.md): This file includes the basic information and instructions for getting started with kubecub.
-+ [CONTRIBUTING.md](https://github.com/kubecub/community/blob/main/CONTRIBUTING.md): This file contains guidelines for contributing to kubecub's codebase, such as how to submit issues, pull requests, and code reviews.
-+ [DEVELOPGUIDE.md](https://github.com/kubecub/community/blob/main/DEVELOPGUIDE.md): This file provides a more in-depth guide to developing kubecub, including information on the project's architecture, coding conventions, and testing practices.
-+ [Official Documentation](nsddd.top): This is the official documentation for kubecub, which includes comprehensive information on all of its features, configuration options, and troubleshooting tips.
++ [README.md](https://github.com/telepace/community/blob/main/README.md): This file includes the basic information and instructions for getting started with telepace.
++ [CONTRIBUTING.md](https://github.com/telepace/community/blob/main/CONTRIBUTING.md): This file contains guidelines for contributing to telepace's codebase, such as how to submit issues, pull requests, and code reviews.
++ [DEVELOPGUIDE.md](https://github.com/telepace/community/blob/main/DEVELOPGUIDE.md): This file provides a more in-depth guide to developing telepace, including information on the project's architecture, coding conventions, and testing practices.
++ [Official Documentation](nsddd.top): This is the official documentation for telepace, which includes comprehensive information on all of its features, configuration options, and troubleshooting tips.
 
 Please obey the following rules to better format the docs, which would greatly improve the reading experience.
 
@@ -142,20 +142,20 @@ Please obey the following rules to better format the docs, which would greatly i
 
 ## Engage to help anything
 
-We choose GitHub as the primary place for kubecub to collaborate. So the latest updates of kubecub are always here. Although contributions via PR is an explicit way to help, we still call for any other ways.
+We choose GitHub as the primary place for telepace to collaborate. So the latest updates of telepace are always here. Although contributions via PR is an explicit way to help, we still call for any other ways.
 
-+ reply to other's [issues](https://github.com/search?q=org%3Akubecub++&type=issues&s=comments&o=desc) if you could;
++ reply to other's [issues](https://github.com/search?q=org%3Atelepace++&type=issues&s=comments&o=desc) if you could;
 + help solve other user's problems;
-+ help review other's [PR](https://github.com/search?q=org%3Akubecub++&type=pullrequests&s=comments&o=desc) design; 
-+ discuss about kubecub to make things clearer;
-+ advocate [kubecub](google.com/search?q=kubecub) technokubecuby beyond GitHub;
-+ write kubecubs on kubecub and so on.
++ help review other's [PR](https://github.com/search?q=org%3Atelepace++&type=pullrequests&s=comments&o=desc) design; 
++ discuss about telepace to make things clearer;
++ advocate [telepace](google.com/search?q=telepace) technotelepacey beyond GitHub;
++ write telepaces on telepace and so on.
 
 In a word, **ANY HELP IS CONTRIBUTION.**
 
 ## Release version
 
-Releases of kubecub are done using [Release Please](https://github.com/googleapis/release-please) and [GoReleaser](https://goreleaser.com/). The workflow looks like this:
+Releases of telepace are done using [Release Please](https://github.com/googleapis/release-please) and [GoReleaser](https://goreleaser.com/). The workflow looks like this:
 
 🎯 A PR is merged to the `main` branch:
 
@@ -164,7 +164,7 @@ Releases of kubecub are done using [Release Please](https://github.com/googleapi
 
 🎯 Merging the 'release please' PR to `main`:
 
-+ Release please is triggered, creates a new release and updates the change kubecub based on the commit messages
++ Release please is triggered, creates a new release and updates the change telepace based on the commit messages
 + GoReleaser is triggered, builds the binaries and attaches them to the release
 + Containers are created and pushed to the container registry
 

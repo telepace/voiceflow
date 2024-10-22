@@ -339,7 +339,6 @@ flycheck_*.el
 # Misc
 .DS_Store
 *.env
-.env.*
 dist
 
 # files used by the developer

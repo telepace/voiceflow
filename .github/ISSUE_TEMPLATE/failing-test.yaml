@@ -1,9 +1,9 @@
-# Copyright © 2023 KubeCub open source community. All rights reserved.
+# Copyright © 2023 telepace open source community. All rights reserved.
 # Licensed under the MIT License (the "License");
 # you may not use this file except in compliance with the License.
 
 name: 🚨 Failing Test
-description: Report continuously failing tests or jobs in kubecub CI
+description: Report continuously failing tests or jobs in telepace CI
 title: "🤖Failing-test: "
 labels: ["kind/failing-test"]
 body:
@@ -14,7 +14,7 @@ body:
       value: 
         <!-- ⚠️ Please ask questions in English. Thank you -->
       placeholder: |
-        Please only use this template for submitting reports about continuously failing tests or jobs in kubecub CI.
+        Please only use this template for submitting reports about continuously failing tests or jobs in telepace CI.
     validations:
       required: true
 
