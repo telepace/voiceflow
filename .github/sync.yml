@@ -1,11 +1,11 @@
-# Copyright © 2023 KubeCub open source community. All rights reserved.
+# Copyright © 2023 telepace open source community. All rights reserved.
 # Licensed under the MIT License (the "License");
 # you may not use this file except in compliance with the License.
 
 # https://github.com/BetaHuhn/repo-file-sync-action
 
 # Synchronization for the.github repository
-kubecub/.github:
+telepace/.github:
   - source: LICENSE
     dest: LICENSE 
   - source: scripts/LICENSE/
@@ -18,7 +18,7 @@ kubecub/.github:
       workflows/
       sync.yml
 
-kubecub/community:
+telepace/community:
   - source: LICENSE
     dest: LICENSE 
   - source: scripts/LICENSE/
@@ -39,15 +39,15 @@ group:
   # first group：common to all warehouses
   # TODO: add the required warehouse here
   - repos: |
-      kubecub/github-label-syncer
-      kubecub/RemoteOps-scripts
-      kubecub/kube-im
-      kubecub/CloudBuildAI
-      kubecub/log
-      kubecub/automation
-      kubecub/kubecub
-      kubecub/feishu-sheet-parser
-      kubecub/docs
+      telepace/github-label-syncer
+      telepace/RemoteOps-scripts
+      telepace/kube-im
+      telepace/CloudBuildAI
+      telepace/log
+      telepace/automation
+      telepace/telepace
+      telepace/feishu-sheet-parser
+      telepace/docs
     files: 
       # - source: .gitingore
       #   dest: .gitingore
@@ -70,10 +70,10 @@ group:
   # # second group：omplex layered architecture, common to go language projects
   # TODO: add the required warehouse here
   # - repos: |
-  #     kubecub/github-label-syncer
-  #     kubecub/kube-im
-  #     kubecub/automation
-  #     kubecub/kubecub
+  #     telepace/github-label-syncer
+  #     telepace/kube-im
+  #     telepace/automation
+  #     telepace/telepace
   #   files: 
   #     # - source: .gitingore
   #     #   dest: .gitingore

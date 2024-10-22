@@ -6,4 +6,4 @@ Read the [contributor documentation](../CONTRIBUTING.md), which will teach you h
 
 
 ## Join community meetings for discussion
-Keep a record of every discussion in [GitHub discussions](https://github.com/orgs/kubecub/discussions), and our minutes are written in [Google Docs](https://docs.google.com/document/d/1nx8MDpuG74NASx081JcCpxPgDITNTpIIos0DS6Vr9GU/edit?usp=sharing).
+Keep a record of every discussion in [GitHub discussions](https://github.com/orgs/telepace/discussions), and our minutes are written in [Google Docs](https://docs.google.com/document/d/1nx8MDpuG74NASx081JcCpxPgDITNTpIIos0DS6Vr9GU/edit?usp=sharing).

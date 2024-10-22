@@ -1,4 +1,4 @@
-# Copyright © 2023 KubeCub open source community. All rights reserved.
+# Copyright © 2023 telepace open source community. All rights reserved.
 # Licensed under the MIT License (the "License");
 # you may not use this file except in compliance with the License.
 
@@ -31,5 +31,5 @@ body:
   - type: markdown
     attributes:
       value: |
-        You can also join our Slack community [here](https://join.slack.com/t/kubecub/shared_invite/zt-1se0k2bae-lkYzz0_T~BYh3rjkvlcUqQ)
-        Feel free to check out other cool repositories of the kubecub Community [here](https://github.com/kubecub)
+        You can also join our Slack community [here](https://join.slack.com/t/telepace/shared_invite/zt-1se0k2bae-lkYzz0_T~BYh3rjkvlcUqQ)
+        Feel free to check out other cool repositories of the telepace Community [here](https://github.com/telepace)

@@ -1,4 +1,4 @@
-# Copyright © 2023 KubeCub & Xinwei Xiong(cubxxw). All rights reserved.
+# Copyright © 2023 telepace & Xinwei Xiong(cubxxw). All rights reserved.
 #
 # Licensed under the MIT License (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ jobs:
         if: env.lychee_exit_code != 0
         uses: peter-evans/create-issue-from-file@v4
         with:
-          title: Bug reports for links in kubecub docs
+          title: Bug reports for links in telepace docs
           content-filepath: ./lychee/out.md
           labels: kind/documentation, triage/unresolved, report
           token: ${{ secrets.BOT_GITHUB_TOKEN }}

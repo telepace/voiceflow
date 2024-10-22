@@ -1,12 +1,12 @@
-# Copyright © 2023 KubeCub open source community. All rights reserved.
+# Copyright © 2023 telepace open source community. All rights reserved.
 # Licensed under the MIT License (the "License");
 # you may not use this file except in compliance with the License.
 
 repository:
-  name: "kubecub"
-  description: "kubecub instant messaging"
-  homepage_url: "https://kubecub.nsddd.top"
-  topics: kubecub, kubernetes, chat, chatgpt
+  name: "telepace"
+  description: "telepace instant messaging"
+  homepage_url: "https://telepace.nsddd.top"
+  topics: telepace, kubernetes, chat, chatgpt
 
   default_branch: main
   allow_squash_merge: true
@@ -18,9 +18,9 @@ repository:
   teams:
     - name: "maintainers"
       permission: "admin"
-    - name: "kubecub-maintainers"
+    - name: "telepace-maintainers"
       permission: "maintain"
-    - name: "kubecub-approvers"
+    - name: "telepace-approvers"
       permission: "push"
     - name: "contributors"
       permission: "push"

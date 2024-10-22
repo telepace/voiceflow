@@ -29,6 +29,6 @@ jobs:
         close-pr-message: 'This PR was closed because it has been stalled for 5 days with no activity. You can reopen it if you want.'
         stale-pr-label: lifecycle/stale
         stale-issue-label: lifecycle/stale
-        exempt-issue-labels: 'kubecub'
-        exempt-pr-labels: 'kubecub'
+        exempt-issue-labels: 'telepace'
+        exempt-pr-labels: 'telepace'
         exempt-draft-pr: true

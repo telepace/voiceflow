@@ -1,9 +1,9 @@
-# Copyright © 2023 KubeCub open source community. All rights reserved.
+# Copyright © 2023 telepace open source community. All rights reserved.
 # Licensed under the MIT License (the "License");
 # you may not use this file except in compliance with the License.
 
 # https://github.com/BetaHuhn/repo-file-sync-action
-name: Synchronize kubecub public code to other repositories
+name: Synchronize telepace public code to other repositories
 on:
     push:
         branches:
@@ -32,7 +32,7 @@ jobs:
           COMMIT_BODY: "🤖 kubbot to synchronize the warehouse"
           GIT_EMAIL: "3293172751ysy@gmail.com"
           GIT_USERNAME: "kubbot"
-          PR_BODY: 👌 kubecub provides automated community services
+          PR_BODY: 👌 telepace provides automated community services
           REVIEWERS: |
             kubbot
             cubxxw

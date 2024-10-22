@@ -21,7 +21,7 @@
 # Teams can be specified as code owners as well. Teams should
 # be identified in the format @org/team-name. Teams must have
 # explicit write access to the repository. In this example,
-# the kubecub team in the github organization owns all .txt files.
+# the telepace team in the github organization owns all .txt files.
 *.txt @cubxxw
 
 # In this example, @cubxxw owns any files in the build/

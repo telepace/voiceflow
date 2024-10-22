@@ -1,6 +1,6 @@
 <h1 align="center" style="border-bottom: none">
     <b>
-        <a href="https://docker.nsddd.top">go-project-layout</a><br>
+        <a href="https://docker.nsddd.top">voiceflow</a><br>
     </b>
 </h1>
 <h3 align="center" style="border-bottom: none">
@@ -9,11 +9,11 @@
 
 
 <p align=center>
-<a href="https://goreportcard.com/report/github.com/kubecub/go-project-layout"><img src="https://goreportcard.com/badge/github.com/kubecub/go-project-layout" alt="A+"></a>
-<a href="https://github.com/issues?q=org%kubecub+is%3Aissue+label%3A%22good+first+issue%22+no%3Aassignee"><img src="https://img.shields.io/github/issues/kubecub/go-project-layout/good%20first%20issue?logo=%22github%22" alt="good first"></a>
-<a href="https://github.com/kubecub/go-project-layout"><img src="https://img.shields.io/github/stars/kubecub/go-project-layout.svg?style=flat&logo=github&colorB=deeppink&label=stars"></a>
-<a href="https://join.slack.com/t/kubecub/shared_invite/zt-1se0k2bae-lkYzz0_T~BYh3rjkvlcUqQ"><img src="https://img.shields.io/badge/Slack-100%2B-blueviolet?logo=slack&amp;logoColor=white"></a>
-<a href="https://github.com/kubecub/go-project-layout/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-green"></a>
+<a href="https://goreportcard.com/report/github.com/telepace/voiceflow"><img src="https://goreportcard.com/badge/github.com/telepace/voiceflow" alt="A+"></a>
+<a href="https://github.com/issues?q=org%telepace+is%3Aissue+label%3A%22good+first+issue%22+no%3Aassignee"><img src="https://img.shields.io/github/issues/telepace/voiceflow/good%20first%20issue?logo=%22github%22" alt="good first"></a>
+<a href="https://github.com/telepace/voiceflow"><img src="https://img.shields.io/github/stars/telepace/voiceflow.svg?style=flat&logo=github&colorB=deeppink&label=stars"></a>
+<a href="https://join.slack.com/t/telepace/shared_invite/zt-1se0k2bae-lkYzz0_T~BYh3rjkvlcUqQ"><img src="https://img.shields.io/badge/Slack-100%2B-blueviolet?logo=slack&amp;logoColor=white"></a>
+<a href="https://github.com/telepace/voiceflow/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-green"></a>
 <a href="https://golang.org/"><img src="https://img.shields.io/badge/Language-Go-blue.svg"></a>
 </p>
 
@@ -37,14 +37,14 @@ I defined a spec template that I could use to quickly start building a full-fled
 In each directory, there is a README.md and an OWNERS, which explains what the directory does and who owns it.
 
 **Labels denger:**
-Read about the [go-project-layout](https://github.com/kubecub/go-project-layout/labels) tag design. We have provided in the [github-label-syncer](https://github.com/kubecub/github-label-syncer) warehouse label synchronizer.
+Read about the [voiceflow](https://github.com/telepace/voiceflow/labels) tag design. We have provided in the [github-label-syncer](https://github.com/telepace/github-label-syncer) warehouse label synchronizer.
 
 
 ## 🛫 Quick start 
 
-> **Note**: You can get started quickly with go-project-layout.
+> **Note**: You can get started quickly with voiceflow.
 
-1. Generate a [new repository](https://github.com/kubecub/go-project-layout/generate) from the template.
+1. Generate a [new repository](https://github.com/telepace/voiceflow/generate) from the template.
 2. Clone the repository locally.
 3. Update files, read the README files in each directory.
 4. Write your code and tests. 
@@ -84,21 +84,21 @@ Read about the [go-project-layout](https://github.com/kubecub/go-project-layout/
 ❯ cp ../sealer/_output/bin/sealer/linux_amd64/sealer ./ # add big binary file
 ❯ git add .
 ❯ git commit -a -s -m "nono"    # Excess commit blocking
-kubecub : Running local kubecub pre-commit hook.
-kubecub : File sealer is 71 MB, which is larger than our configured limit of 2 MB
-kubecub : If you really need to commit this file, you can override the size limit by setting the GIT_FILE_SIZE_LIMIT environment variable, e.g. GIT_FILE_SIZE_LIMIT=42000000 for 42MB. Or, commit with the --no-verify switch to skip the check entirely.
-kubecub : Commit aborted
+telepace : Running local telepace pre-commit hook.
+telepace : File sealer is 71 MB, which is larger than our configured limit of 2 MB
+telepace : If you really need to commit this file, you can override the size limit by setting the GIT_FILE_SIZE_LIMIT environment variable, e.g. GIT_FILE_SIZE_LIMIT=42000000 for 42MB. Or, commit with the --no-verify switch to skip the check entirely.
+telepace : Commit aborted
 ❯ rm -rf .git # remote big binary 
 ❯ git commit -a -s -m "nono"    # Bad commit blocking
-kubecub : Running local kubecub pre-commit hook.
-kubecub : Running the kubecub commit-msg hook.
+telepace : Running local telepace pre-commit hook.
+telepace : Running the telepace commit-msg hook.
 fakehsh: subject does not match regex [^(build|chore|ci|docs|feat|feature|fix|perf|refactor|revert|style|test)(.*)?:\s?.*]
 fakehsh: subject length less than min [10]
-kubecub : Please fix your commit message to match kubecub coding standards
-kubecub : https://gist.github.com/cubxxw/126b72104ac0b0ca484c9db09c3e5694#file-githook-md
+telepace : Please fix your commit message to match telepace coding standards
+telepace : https://gist.github.com/cubxxw/126b72104ac0b0ca484c9db09c3e5694#file-githook-md
 ❯ git commit -a -s -m "docs(main): README-en Chinese documentation"
-kubecub : Running local kubecub pre-commit hook.
-kubecub : Running the kubecub commit-msg hook.
+telepace : Running local telepace pre-commit hook.
+telepace : Running the telepace commit-msg hook.
 [main b3b339f] docs(main): README-en Chinese documentation
  1 file changed, 29 insertions(+)
 ❯ git push origin main
@@ -151,7 +151,7 @@ Comment in an issue:
 Catalog standardization design structure:
 
 ```bash
-.go-project-layout
+.voiceflow
 ├── CONTRIBUTING.md          # Contribution guidelines
 ├── LICENSE                  # License information
 ├── Makefile                 # Makefile for building and running the project
@@ -218,32 +218,32 @@ Catalog standardization design structure:
 
 ## 🗓️ community meeting
 
-We welcome everyone to join us and contribute to go-project-layout, whether you are new to open source or professional. We are committed to promoting an open source culture, so we offer community members neighborhood prizes and reward money in recognition of their contributions. We believe that by working together, we can build a strong community and make valuable open source tools and resources available to more people. So if you are interested in go-project-layout, please join our community and start contributing your ideas and skills!
+We welcome everyone to join us and contribute to voiceflow, whether you are new to open source or professional. We are committed to promoting an open source culture, so we offer community members neighborhood prizes and reward money in recognition of their contributions. We believe that by working together, we can build a strong community and make valuable open source tools and resources available to more people. So if you are interested in voiceflow, please join our community and start contributing your ideas and skills!
 
-We take notes of each [biweekly meeting](https://github.com/kubecub/go-project-layout/issues/2) in [GitHub discussions](https://github.com/orgs/kubecub/discussions), and our minutes are written in [Google Docs](https://docs.google.com/document/d/1nx8MDpuG74NASx081JcCpxPgDITNTpIIos0DS6Vr9GU/edit?usp=sharing).
+We take notes of each [biweekly meeting](https://github.com/telepace/voiceflow/issues/2) in [GitHub discussions](https://github.com/orgs/telepace/discussions), and our minutes are written in [Google Docs](https://docs.google.com/document/d/1nx8MDpuG74NASx081JcCpxPgDITNTpIIos0DS6Vr9GU/edit?usp=sharing).
 
 
 
-go-project-layout maintains a [public roadmap](https://github.com/kubecub/community/tree/main/roadmaps). It gives a a high-level view of the main priorities for the project, the maturity of different features and projects, and how to influence the project direction.
+voiceflow maintains a [public roadmap](https://github.com/telepace/community/tree/main/roadmaps). It gives a a high-level view of the main priorities for the project, the maturity of different features and projects, and how to influence the project direction.
 
 ## 🤼‍ Contributing & Development
 
-kubecub Our goal is to build a top-level open source community. We have a set of standards, in the [Community repository](https://github.com/kubecub/community).
+telepace Our goal is to build a top-level open source community. We have a set of standards, in the [Community repository](https://github.com/telepace/community).
 
-If you'd like to contribute to this go-project-layout repository, please read our [contributor documentation](https://github.com/kubecub/go-project-layout/blob/main/CONTRIBUTING.md).
+If you'd like to contribute to this voiceflow repository, please read our [contributor documentation](https://github.com/telepace/voiceflow/blob/main/CONTRIBUTING.md).
 
-Before you start, please make sure your changes are in demand. The best for that is to create a [new discussion](https://github.com/kubecub/go-project-layout/discussions/new/choose) OR [Slack Communication](https://join.slack.com/t/kubecub/shared_invite/zt-1se0k2bae-lkYzz0_T~BYh3rjkvlcUqQ), or if you find an issue, [report it](https://github.com/kubecub/go-project-layout/issues/new/choose) first.
+Before you start, please make sure your changes are in demand. The best for that is to create a [new discussion](https://github.com/telepace/voiceflow/discussions/new/choose) OR [Slack Communication](https://join.slack.com/t/telepace/shared_invite/zt-1se0k2bae-lkYzz0_T~BYh3rjkvlcUqQ), or if you find an issue, [report it](https://github.com/telepace/voiceflow/issues/new/choose) first.
 
 
 ## 🚨 License
 
-Kubecub is licensed under the MIT License. See [LICENSE](https://github.com/kubecub/go-project-layout/tree/main/LICENSE) for the full license text.
+telepace is licensed under the MIT License. See [LICENSE](https://github.com/telepace/voiceflow/tree/main/LICENSE) for the full license text.
 
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkubecub%2Fkubecub.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkubecub%2Fgo-project-layout?ref=badge_large)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftelepace%2Ftelepace.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftelepace%2Fvoiceflow?ref=badge_large)
 
 
 ## 🔮 Thanks to our contributors!
 
-<a href="https://github.com/kubecub/go-project-layout/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=kubecub/go-project-layout" />
+<a href="https://github.com/telepace/voiceflow/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=telepace/voiceflow" />
 </a>
