@@ -1,7 +1,7 @@
 package azure
 
 import (
-    "your_project/internal/config"
+    "github.com/telepace/voiceflow/internal/config"
     // 导入 Azure TTS SDK
 )
 

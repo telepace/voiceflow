@@ -1,7 +1,7 @@
 package google
 
 import (
-    "your_project/internal/config"
+    "github.com/telepace/voiceflow/internal/config"
     // 导入 Google Cloud Text-to-Speech SDK
 )
 
