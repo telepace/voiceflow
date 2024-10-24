@@ -1,0 +1,120 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+}
+
+.chat-container {
+    width: 400px;
+    height: 600px;
+    margin: 50px auto;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.chat-header {
+    padding: 15px;
+    background-color: #007bff;
+    color: #fff;
+    text-align: center;
+}
+
+.chat-window {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    background-color: #e9ecef;
+}
+
+.message {
+    margin-bottom: 10px;
+}
+
+.message .user {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.system-message {
+    text-align: center;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.chat-input {
+    display: flex;
+    padding: 10px;
+    background-color: #f8f9fa;
+    align-items: center;
+}
+
+.chat-input input[type="text"] {
+    flex: 1;
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.chat-input button {
+    margin-left: 5px;
+    padding: 8px 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#send-text-btn {
+    background-color: #28a745;
+    color: #fff;
+}
+
+#record-voice-btn {
+    background-color: #ffc107;
+    color: #fff;
+    position: relative;
+}
+
+#record-voice-btn.recording {
+    background-color: #dc3545;
+    animation: recording-pulse 1s infinite;
+}
+
+@keyframes recording-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220,53,69, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(220,53,69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(220,53,69, 0);
+    }
+}
+
+#upload-audio-btn {
+    background-color: #17a2b8;
+    color: #fff;
+}
+
+/* 滚动条样式 */
+.chat-window::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-window::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.chat-window::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.chat-window::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
