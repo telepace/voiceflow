@@ -1,4 +1,8 @@
 package llm
+import (
+    "github.com/telepace/voiceflow/internal/llm/local"
+    "github.com/telepace/voiceflow/internal/llm/openai"
+)
 
 type Service interface {
     GetResponse(prompt string) (string, error)
@@ -7,10 +11,10 @@ type Service interface {
 func NewService(provider string) Service {
     switch provider {
     case "openai":
-        return NewOpenAILLM()
+        return openai.NewOpenAILLM()
     case "local":
-        return NewLocalLLM()
+        return local.NewLocalLLM()
     default:
-        return NewLocalLLM()
+        return local.NewLocalLLM()
     }
 }

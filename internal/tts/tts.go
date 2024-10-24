@@ -1,18 +1,26 @@
 package tts
 
+import (
+    "github.com/telepace/voiceflow/internal/tts/azure"
+    "github.com/telepace/voiceflow/internal/tts/google"
+    "github.com/telepace/voiceflow/internal/tts/local"
+)
+
+// Service 定义了 TTS 服务的通用接口
 type Service interface {
-    Synthesize(text string) ([]byte, error)
+    Synthesize(text string) ([]byte, error)  // 将文本合成为音频数据
 }
 
+// NewService 根据配置返回相应的 TTS 服务实现
 func NewService(provider string) Service {
     switch provider {
     case "azure":
-        return NewAzureTTS()
+        return azure.NewAzureTTS()  // 调用 Azure TTS 实现
     case "google":
-        return NewGoogleTTS()
+        return google.NewGoogleTTS()  // 调用 Google TTS 实现
     case "local":
-        return NewLocalTTS()
+        return local.NewLocalTTS()  // 调用本地 TTS 实现
     default:
-        return NewLocalTTS()
+        return local.NewLocalTTS()  // 默认使用本地 TTS
     }
 }

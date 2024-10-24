@@ -22,4 +22,4 @@ jobs:
       
       - name: Test build artifacts
         run: |
-          # Add your tests here to check the build artifacts
+          make test

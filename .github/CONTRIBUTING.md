@@ -1,4 +1,4 @@
-# CONTIRIBUTING
+# CONTRIBUTING
 
 We expect as many developers as possible to contribute, which is the motivation for our efforts to maintain the community
 

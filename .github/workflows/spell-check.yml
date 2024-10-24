@@ -11,16 +11,16 @@ on:
 jobs:
   run:
     name: Spell Check with Typos
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest e
     steps:
     - name: Checkout Actions Repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Check spelling of md
       uses: crate-ci/typos@master
       with: 
         files: 
-            ./CONTIRIBUTING.md
+            ./CONTRIBUTING.md
             ./README.md
             
     - name: Use custom config file
