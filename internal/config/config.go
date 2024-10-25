@@ -2,10 +2,8 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"sync"
 
-	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
@@ -38,7 +36,7 @@ type Config struct {
 		STTKey string `mapstructure:"stt_key"`
 		Region string
 	}
-	MinIO struct { // 添加 MinIO 配置结构体
+	MinIO struct {
 		Enabled    bool   `mapstructure:"enabled"`
 		BucketName string `mapstructure:"bucket_name"`
 		Endpoint   string `mapstructure:"endpoint"`
@@ -55,45 +53,24 @@ type Config struct {
 var (
 	cfg     *Config
 	cfgLock sync.RWMutex
-	once    sync.Once
 )
 
 func GetConfig() *Config {
 	cfgLock.RLock()
 	defer cfgLock.RUnlock()
-	return cfg
-}
-
-func loadConfig() {
-	// 加载 .env 文件
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
-	}
-
-	log.Println("Loading config file")
-
-	// 加载 config.yaml
-	viper.SetConfigName("config")
-	viper.AddConfigPath("./configs")
-	viper.SetConfigType("yaml")
-
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("Error reading config file: %v", err)
-	}
-
-	// 解析配置
-	cfg = &Config{}
-	if err := viper.Unmarshal(cfg); err != nil {
-		log.Fatalf("Unable to decode into struct: %v", err)
-	}
-}
-
-func init() {
-	once.Do(func() {
+	if cfg == nil {
+		cfgLock.RUnlock()
 		cfgLock.Lock()
 		defer cfgLock.Unlock()
-		loadConfig()
-	})
+		if cfg == nil {
+			cfg = &Config{}
+			if err := viper.Unmarshal(cfg); err != nil {
+				panic(fmt.Errorf("无法解析配置结构体: %v", err))
+			}
+		}
+		cfgLock.RLock()
+	}
+	return cfg
 }
 
 func SetProvider(service string, provider string) error {
@@ -108,7 +85,7 @@ func SetProvider(service string, provider string) error {
 	case "llm":
 		cfg.LLM.Provider = provider
 	default:
-		return fmt.Errorf("unknown service: %s", service)
+		return fmt.Errorf("未知的服务: %s", service)
 	}
 	return nil
 }

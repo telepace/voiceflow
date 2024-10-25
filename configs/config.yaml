@@ -2,14 +2,14 @@ server:
   port: 18080
   enable_tls: false
 
-Web:
+web:
   port: 18090
 
 minio:
   enabled: true
-  endpoint: ${MINIO_ENDPOINT}
-  access_key: ${MINIO_ACCESS_KEY}
-  secret_key: ${MINIO_SECRET_KEY}
+  endpoint: localhost:9000
+  access_key: minioadmin
+  secret_key: minioadmin
   bucket_name: 'telepace-pipeline'
   secure: true  # 如果需要使用 HTTPS 连接，设置为 true
 
