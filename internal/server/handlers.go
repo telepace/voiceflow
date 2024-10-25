@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"github.com/telepace/voiceflow/pkg/logger"
 	"log"
 	"net/http"
 	"sync"
@@ -57,6 +58,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 		serviceLock.RUnlock()
 
 		if mt == websocket.TextMessage {
+			logger.Logger.Debug("Received text message")
 			// 处理文字消息
 			var msg map[string]string
 			if err := json.Unmarshal(data, &msg); err != nil {
@@ -82,6 +84,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 			// 返回音频 URL 给前端
 			ws.WriteJSON(map[string]string{"audio_url": audioURL})
 		} else if mt == websocket.BinaryMessage {
+			logger.Logger.Debug("Received binary message")
 			// 处理音频消息
 			// 使用 STT 服务将语音转换为文字
 			text, err := currentSTTService.Recognize(data)

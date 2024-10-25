@@ -35,4 +35,4 @@ openai:
   api_key: "your_openai_api_key"
 
 logging:
-  level: info
+  level: debug
