@@ -1,10 +1,10 @@
+// handlers.go - 服务器处理函数
 package server
 
 import (
 	"encoding/json"
 	"github.com/telepace/voiceflow/pkg/config"
 	"github.com/telepace/voiceflow/pkg/logger"
-	"log"
 	"net/http"
 	"sync"
 
@@ -31,16 +31,26 @@ func initServices() {
 		logger.Fatalf("配置初始化失败: %v", err)
 	}
 	sttService = stt.NewService(cfg.STT.Provider)
-	ttsService = tts.NewService(cfg.TTS.Provider)
-	llmService = llm.NewService(cfg.LLM.Provider)
-	storageService = storage.NewService()
+	//ttsService = tts.NewService(cfg.TTS.Provider)
+	//llmService = llm.NewService(cfg.LLM.Provider)
+	//storageService = storage.NewService()
 }
 
 func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
+
+	// 检查服务实例是否为空
+	if s == nil {
+		logger.Error("Server instance is nil in handleConnections")
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	} else {
+		logger.Infof("Server instance is not nil in handleConnections: %v", s)
+	}
+
 	// 升级 WebSocket 连接
 	ws, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("WebSocket Upgrade error: %v", err)
+		logger.Errorf("WebSocket Upgrade error: %v", err)
 		return
 	}
 	defer ws.Close()
@@ -48,7 +58,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	for {
 		mt, data, err := ws.ReadMessage()
 		if err != nil {
-			log.Printf("Read error: %v", err)
+			logger.Errorf("Read error: %v", err)
 			break
 		}
 
@@ -65,7 +75,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 			// 处理文字消息
 			var msg map[string]string
 			if err := json.Unmarshal(data, &msg); err != nil {
-				log.Printf("JSON parse error: %v", err)
+				logger.Error("JSON parse error: %v", err)
 				continue
 			}
 			text := msg["text"]
@@ -73,14 +83,14 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 			// 调用 TTS 服务，将文字转换为语音
 			audioData, err := currentTTSService.Synthesize(text)
 			if err != nil {
-				log.Printf("TTS error: %v", err)
+				logger.Error("TTS error: %v", err)
 				continue
 			}
 
 			// 存储音频并获取 URL
 			audioURL, err := currentStorageService.StoreAudio(audioData)
 			if err != nil {
-				log.Printf("Storage error: %v", err)
+				logger.Error("Storage error: %v", err)
 				continue
 			}
 

@@ -1,3 +1,4 @@
+// assemblyai.go
 package assemblyai
 
 import (
@@ -19,6 +20,7 @@ type AssemblyAI struct {
 }
 
 func NewAssemblyAI() *AssemblyAI {
+	logger.Info("Using AssemblyAI STT provider")
 	cfg, err := config.GetConfig()
 	if err != nil {
 		logger.Fatalf("Failed to get config: %v", err)

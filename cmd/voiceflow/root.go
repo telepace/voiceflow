@@ -1,8 +1,10 @@
+// root.go
 package main
 
 import (
 	"context"
 	"fmt"
+	"github.com/joho/godotenv"
 	"github.com/telepace/voiceflow/pkg/config"
 	"net/http"
 	"os"
@@ -12,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/telepace/voiceflow/internal/server"
+	serverpkg "github.com/telepace/voiceflow/internal/server"
 	"github.com/telepace/voiceflow/pkg/logger"
 )
 
@@ -28,67 +30,59 @@ var rootCmd = &cobra.Command{
 func run(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
-	// 初始化日志配置
-	logCfg := logger.Config{
-		Level:        viper.GetString("logging.level"),
-		Format:       viper.GetString("logging.format"),
-		Filename:     viper.GetString("logging.filename"),
-		MaxSize:      viper.GetInt("logging.max_size"),
-		MaxBackups:   viper.GetInt("logging.max_backups"),
-		MaxAge:       viper.GetInt("logging.max_age"),
-		Compress:     viper.GetBool("logging.compress"),
-		ReportCaller: true,
+	// Load configuration
+	cfg, err := config.GetConfig()
+	if err != nil {
+		return fmt.Errorf("failed to get config: %w", err)
 	}
 
-	// 服务标识信息
+	// Initialize logger
+	logCfg := logger.Config{
+		Level:        cfg.Logging.Level,
+		Format:       cfg.Logging.Format,
+		Filename:     cfg.Logging.Filename,
+		MaxSize:      cfg.Logging.MaxSize,
+		MaxBackups:   cfg.Logging.MaxBackups,
+		MaxAge:       cfg.Logging.MaxAge,
+		Compress:     cfg.Logging.Compress,
+		ReportCaller: cfg.Logging.ReportCaller,
+	}
+
 	fields := logger.StandardFields{
 		ServiceID:  "voiceflow",
 		InstanceID: fmt.Sprintf("instance-%d", time.Now().Unix()),
 	}
 
-	// 初始化日志系统
 	if err := logger.Init(logCfg, fields); err != nil {
 		return fmt.Errorf("failed to initialize logger: %w", err)
 	}
 
 	// 记录启动信息
-	logger.Info(ctx, "Starting VoiceFlow server")
+	logger.InfoContextf(ctx, "Starting VoiceFlow server with config: %+v", cfg)
 
-	// 初始化配置
-	cfg, err := config.GetConfig()
-	if err != nil {
-		logger.Error(ctx, "Failed to load configuration", "error", err)
-		return fmt.Errorf("failed to get config: %w", err)
-	}
-
-	// 记录配置信息
-	logger.Info(ctx, "Configuration loaded",
-		"server_port", cfg.Server.Port,
-		"enable_tls", cfg.Server.EnableTLS,
-	)
-
-	// 创建服务器实例
+	// Set up HTTP server
 	mux := http.NewServeMux()
-
-	// 注册路由处理器
-	logger.Debug(ctx, "Registering HTTP handlers")
 	mux.Handle("/", http.FileServer(http.Dir("./web")))
 	mux.Handle("/audio_files/", http.StripPrefix("/audio_files/", http.FileServer(http.Dir("./audio_files"))))
 
-	// 初始化 WebSocket 服务器
-	wsServer := server.NewServer()
+	// Initialize WebSocket server
+	wsServer := serverpkg.NewServer()
+	if wsServer == nil {
+		logger.Fatal("Failed to create Server instance")
+	}
+
 	wsServer.SetupRoutes(mux)
 
-	// 创建 HTTP 服务器
+	// Create HTTP server
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
 		Handler: loggingMiddleware(mux),
 	}
 
-	// 启动服务器
-	logger.Info(ctx, "Server starting", "address", srv.Addr)
+	// Start server
+	logger.InfoContext(ctx, "Server starting", "address", srv.Addr)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		logger.Error(ctx, "Server failed to start", "error", err)
+		logger.ErrorContext(ctx, "Server failed to start", "error", err)
 		return fmt.Errorf("server error: %w", err)
 	}
 
@@ -134,16 +128,27 @@ func init() {
 	rootCmd.PersistentFlags().Bool("server.enable_tls", false, "enable TLS")
 
 	// 日志相关配置项
-	rootCmd.PersistentFlags().String("logging.level", "info", "log level")
+	// Logging flags
+	rootCmd.PersistentFlags().String("logging.level", "info", "log level (debug, info, warn, error, fatal)")
 	rootCmd.PersistentFlags().String("logging.format", "json", "log format (json/text)")
 	rootCmd.PersistentFlags().String("logging.filename", "", "log file path")
+	rootCmd.PersistentFlags().Int("logging.max_size", 100, "maximum size in MB before log file rotation")
+	rootCmd.PersistentFlags().Int("logging.max_backups", 3, "maximum number of old log files to retain")
+	rootCmd.PersistentFlags().Int("logging.max_age", 28, "maximum number of days to retain old log files")
+	rootCmd.PersistentFlags().Bool("logging.compress", true, "whether to compress old log files")
+	rootCmd.PersistentFlags().Bool("logging.report_caller", true, "whether to include caller information in logs")
 
 	// 绑定到 viper
 	viper.BindPFlags(rootCmd.PersistentFlags())
 }
 
 func initConfig() {
-	//ctx := context.Background()
+	// 加载 .env 文件
+	if err := godotenv.Load(); err != nil {
+		logger.Fatal("No .env file found or failed to load, proceeding without it")
+	} else {
+		logger.Info(".env file loaded")
+	}
 
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
@@ -176,15 +181,15 @@ func setDefaults() {
 	// 日志默认配置
 	viper.SetDefault("logging.level", "info")
 	viper.SetDefault("logging.format", "json")
-	viper.SetDefault("logging.filename", "") // 默认输出到标准输出
+	viper.SetDefault("logging.filename", "")
 	viper.SetDefault("logging.max_size", 100)
 	viper.SetDefault("logging.max_backups", 3)
 	viper.SetDefault("logging.max_age", 28)
 	viper.SetDefault("logging.compress", true)
+	viper.SetDefault("logging.report_caller", true)
 
 	// 其他服务配置...
 	viper.SetDefault("web.port", 18090)
 	viper.SetDefault("minio.enabled", true)
 	viper.SetDefault("minio.endpoint", "localhost:9000")
-	// ... 其他配置项
 }

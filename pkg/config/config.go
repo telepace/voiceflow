@@ -1,3 +1,4 @@
+// config.go
 package config
 
 import (
@@ -48,7 +49,14 @@ type Config struct {
 		Secure     bool   `mapstructure:"secure"`
 	}
 	Logging struct {
-		Level string
+		Level        string
+		Format       string
+		Filename     string `mapstructure:"filename"`
+		MaxSize      int    `mapstructure:"max_size"`
+		MaxBackups   int    `mapstructure:"max_backups"`
+		MaxAge       int    `mapstructure:"max_age"`
+		Compress     bool   `mapstructure:"compress"`
+		ReportCaller bool   `mapstructure:"report_caller"`
 	}
 }
 

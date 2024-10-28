@@ -1,6 +1,8 @@
+// server.go
 package server
 
 import (
+	"github.com/telepace/voiceflow/pkg/logger"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -16,16 +18,25 @@ func NewServer() *Server {
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
 			CheckOrigin: func(r *http.Request) bool {
-				return true // 根据需要进行跨域处理
+				return true
 			},
 		},
 	}
 }
 
 func (s *Server) SetupRoutes(mux *http.ServeMux) {
-	// WebSocket 路由
-	mux.HandleFunc("/ws", s.handleConnections)
+	if s == nil {
+		logger.Error("Server instance is nil in SetupRoutes")
+	} else {
+		logger.Info("Server instance is not nil in SetupRoutes")
+	}
 
-	// 配置更改的 RESTful API
-	mux.HandleFunc("/config", s.HandleConfig)
+	// 使用闭包来包装方法调用，确保正确捕获接收者 s
+	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		s.handleConnections(w, r)
+	})
+
+	mux.HandleFunc("/config", func(w http.ResponseWriter, r *http.Request) {
+		s.HandleConfig(w, r)
+	})
 }

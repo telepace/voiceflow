@@ -34,8 +34,24 @@ google:
 openai:
   api_key: "your_openai_api_key"
 
+# 日志配置
 logging:
-  level: Debug
+  # 日志级别（选项：debug（调试）、info（信息）、warn（警告）、error（错误）、fatal（致命错误））
+  level: "info"
+  # 日志格式（选项：json（JSON 格式）、text（文本格式））
+  format: "text"
+  # 日志文件路径（留空则仅输出到标准输出）
+  filename: ""
+  # 日志文件轮转前的最大大小（单位：MB）
+  max_size: 100
+  # 要保留的旧日志文件的最大数量
+  max_backups: 3
+  # 保留旧日志文件的最大天数
+  max_age: 28
+  # 是否压缩旧日志文件
+  compress: true
+  # 是否在日志中包含调用者信息
+  report_caller: false
 
 assemblyai:
   api_key: "your_assemblyai_api_key"
