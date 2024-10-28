@@ -5,10 +5,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/telepace/voiceflow/pkg/config"
+	"github.com/telepace/voiceflow/pkg/logger"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/telepace/voiceflow/internal/config"
 )
 
 type GoogleSTT struct {
@@ -17,7 +17,10 @@ type GoogleSTT struct {
 
 // NewGoogleSTT 创建并返回一个新的 GoogleSTT 实例
 func NewGoogleSTT() *GoogleSTT {
-	cfg := config.GetConfig()
+	cfg, err := config.GetConfig()
+	if err != nil {
+		logger.Fatalf("配置初始化失败: %v", err)
+	}
 	return &GoogleSTT{
 		apiKey: cfg.Google.STTKey,
 	}

@@ -2,9 +2,8 @@ package config
 
 import (
 	"fmt"
-	"sync"
-
 	"github.com/spf13/viper"
+	"sync"
 )
 
 type Config struct {
@@ -23,6 +22,9 @@ type Config struct {
 	}
 	LLM struct {
 		Provider string
+	}
+	AssemblyAI struct {
+		APIKey string `mapstructure:"api_key"`
 	}
 	OpenAI struct {
 		APIKey string `mapstructure:"api_key"`
@@ -52,30 +54,29 @@ type Config struct {
 
 var (
 	cfg     *Config
+	cfgOnce sync.Once
 	cfgLock sync.RWMutex
 )
 
-func GetConfig() *Config {
-	cfgLock.RLock()
-	defer cfgLock.RUnlock()
-	if cfg == nil {
-		cfgLock.RUnlock()
-		cfgLock.Lock()
-		defer cfgLock.Unlock()
-		if cfg == nil {
-			cfg = &Config{}
-			if err := viper.Unmarshal(cfg); err != nil {
-				panic(fmt.Errorf("无法解析配置结构体: %v", err))
-			}
+// GetConfig 使用 sync.Once 确保配置只初始化一次
+func GetConfig() (*Config, error) {
+	var initErr error
+	cfgOnce.Do(func() {
+		cfg = &Config{}
+		if err := viper.Unmarshal(cfg); err != nil {
+			initErr = fmt.Errorf("无法解析配置结构体: %v", err)
 		}
-		cfgLock.RLock()
-	}
-	return cfg
+	})
+	return cfg, initErr
 }
 
 func SetProvider(service string, provider string) error {
 	cfgLock.Lock()
 	defer cfgLock.Unlock()
+
+	if cfg == nil {
+		return fmt.Errorf("配置尚未初始化")
+	}
 
 	switch service {
 	case "stt":

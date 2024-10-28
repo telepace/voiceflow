@@ -1,16 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"log"
+	"github.com/telepace/voiceflow/pkg/config"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/telepace/voiceflow/internal/config"
 	"github.com/telepace/voiceflow/internal/server"
 	"github.com/telepace/voiceflow/pkg/logger"
 )
@@ -21,36 +22,104 @@ var rootCmd = &cobra.Command{
 	Use:   "voiceflow",
 	Short: "VoiceFlow is a voice processing server",
 	Long:  `VoiceFlow is a server application for processing voice data.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		// 初始化配置
-		cfg := config.GetConfig()
+	RunE:  run,
+}
 
-		// 初始化日志
-		logger.Init(cfg.Logging.Level)
+func run(cmd *cobra.Command, args []string) error {
+	ctx := context.Background()
 
-		// 创建一个新的 ServeMux
-		mux := http.NewServeMux()
+	// 初始化日志配置
+	logCfg := logger.Config{
+		Level:        viper.GetString("logging.level"),
+		Format:       viper.GetString("logging.format"),
+		Filename:     viper.GetString("logging.filename"),
+		MaxSize:      viper.GetInt("logging.max_size"),
+		MaxBackups:   viper.GetInt("logging.max_backups"),
+		MaxAge:       viper.GetInt("logging.max_age"),
+		Compress:     viper.GetBool("logging.compress"),
+		ReportCaller: true,
+	}
 
-		// 提供静态文件服务
-		mux.Handle("/", http.FileServer(http.Dir("./web")))
-		mux.Handle("/audio_files/", http.StripPrefix("/audio_files/", http.FileServer(http.Dir("./audio_files"))))
+	// 服务标识信息
+	fields := logger.StandardFields{
+		ServiceID:  "voiceflow",
+		InstanceID: fmt.Sprintf("instance-%d", time.Now().Unix()),
+	}
 
-		// 初始化服务器并设置路由
-		wsServer := server.NewServer()
-		wsServer.SetupRoutes(mux)
+	// 初始化日志系统
+	if err := logger.Init(logCfg, fields); err != nil {
+		return fmt.Errorf("failed to initialize logger: %w", err)
+	}
 
-		// 启动服务器
-		addr := fmt.Sprintf(":%d", cfg.Server.Port)
-		log.Printf("Server started on %s", addr)
-		if err := http.ListenAndServe(addr, mux); err != nil {
-			log.Fatalf("Server error: %v", err)
-		}
-	},
+	// 记录启动信息
+	logger.Info(ctx, "Starting VoiceFlow server")
+
+	// 初始化配置
+	cfg, err := config.GetConfig()
+	if err != nil {
+		logger.Error(ctx, "Failed to load configuration", "error", err)
+		return fmt.Errorf("failed to get config: %w", err)
+	}
+
+	// 记录配置信息
+	logger.Info(ctx, "Configuration loaded",
+		"server_port", cfg.Server.Port,
+		"enable_tls", cfg.Server.EnableTLS,
+	)
+
+	// 创建服务器实例
+	mux := http.NewServeMux()
+
+	// 注册路由处理器
+	logger.Debug(ctx, "Registering HTTP handlers")
+	mux.Handle("/", http.FileServer(http.Dir("./web")))
+	mux.Handle("/audio_files/", http.StripPrefix("/audio_files/", http.FileServer(http.Dir("./audio_files"))))
+
+	// 初始化 WebSocket 服务器
+	wsServer := server.NewServer()
+	wsServer.SetupRoutes(mux)
+
+	// 创建 HTTP 服务器
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
+		Handler: loggingMiddleware(mux),
+	}
+
+	// 启动服务器
+	logger.Info(ctx, "Server starting", "address", srv.Addr)
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		logger.Error(ctx, "Server failed to start", "error", err)
+		return fmt.Errorf("server error: %w", err)
+	}
+
+	return nil
+}
+
+// 简单的日志中间件
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		start := time.Now()
+
+		logger.Info(ctx, "Request started",
+			"method", r.Method,
+			"path", r.URL.Path,
+			"remote_addr", r.RemoteAddr,
+		)
+
+		next.ServeHTTP(w, r)
+
+		logger.Info(ctx, "Request completed",
+			"method", r.Method,
+			"path", r.URL.Path,
+			"duration", time.Since(start).String(),
+		)
+	})
 }
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		logger.Error(context.Background(), "Command execution failed", "error", err)
 		os.Exit(1)
 	}
 }
@@ -58,69 +127,64 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// 定义持久化标志（全局）
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "配置文件 (默认查找路径: ./config.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file path")
 
-	// 绑定常用标志
-	rootCmd.PersistentFlags().Int("server.port", 18080, "服务器端口")
-	rootCmd.PersistentFlags().Bool("server.enable_tls", false, "是否启用 TLS")
-	rootCmd.PersistentFlags().String("logging.level", "info", "日志级别")
+	// 基础配置项
+	rootCmd.PersistentFlags().Int("server.port", 18080, "server port")
+	rootCmd.PersistentFlags().Bool("server.enable_tls", false, "enable TLS")
 
-	// 绑定标志到 Viper 配置
-	viper.BindPFlag("server.port", rootCmd.PersistentFlags().Lookup("server.port"))
-	viper.BindPFlag("server.enable_tls", rootCmd.PersistentFlags().Lookup("server.enable_tls"))
-	viper.BindPFlag("logging.level", rootCmd.PersistentFlags().Lookup("logging.level"))
+	// 日志相关配置项
+	rootCmd.PersistentFlags().String("logging.level", "info", "log level")
+	rootCmd.PersistentFlags().String("logging.format", "json", "log format (json/text)")
+	rootCmd.PersistentFlags().String("logging.filename", "", "log file path")
+
+	// 绑定到 viper
+	viper.BindPFlags(rootCmd.PersistentFlags())
 }
 
 func initConfig() {
+	//ctx := context.Background()
+
 	if cfgFile != "" {
-		// 使用命令行标志指定的配置文件
 		viper.SetConfigFile(cfgFile)
-	} else if os.Getenv("VOICEFLOW_CONFIG") != "" {
-		// 使用环境变量指定的配置文件
-		viper.SetConfigFile(os.Getenv("VOICEFLOW_CONFIG"))
 	} else {
-		// 默认配置文件路径
 		viper.SetConfigName("config")
 		viper.AddConfigPath("/etc/voiceflow/")
 		viper.AddConfigPath("$HOME/.voiceflow")
 		viper.AddConfigPath(".")
-		viper.AddConfigPath("./configs") // 添加项目的 configs 目录
+		viper.AddConfigPath("./configs")
 	}
 
 	viper.SetEnvPrefix("VOICEFLOW")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv() // 自动读取匹配的环境变量
+	viper.AutomaticEnv()
 
-	// 读取配置文件
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("使用的配置文件:", viper.ConfigFileUsed())
+		fmt.Printf("Using config file: %s\n", viper.ConfigFileUsed())
 	} else {
-		fmt.Println("未找到配置文件，使用默认配置")
+		fmt.Println("No config file found, using defaults")
 	}
 
-	// 设置默认值
 	setDefaults()
 }
 
 func setDefaults() {
+	// 服务器默认配置
 	viper.SetDefault("server.port", 18080)
 	viper.SetDefault("server.enable_tls", false)
+
+	// 日志默认配置
+	viper.SetDefault("logging.level", "info")
+	viper.SetDefault("logging.format", "json")
+	viper.SetDefault("logging.filename", "") // 默认输出到标准输出
+	viper.SetDefault("logging.max_size", 100)
+	viper.SetDefault("logging.max_backups", 3)
+	viper.SetDefault("logging.max_age", 28)
+	viper.SetDefault("logging.compress", true)
+
+	// 其他服务配置...
 	viper.SetDefault("web.port", 18090)
 	viper.SetDefault("minio.enabled", true)
 	viper.SetDefault("minio.endpoint", "localhost:9000")
-	viper.SetDefault("minio.access_key", "minioadmin")
-	viper.SetDefault("minio.secret_key", "minioadmin")
-	viper.SetDefault("minio.bucket_name", "telepace-pipeline")
-	viper.SetDefault("minio.secure", true)
-	viper.SetDefault("stt.provider", "azure")
-	viper.SetDefault("tts.provider", "google")
-	viper.SetDefault("llm.provider", "openai")
-	viper.SetDefault("azure.stt_key", "your_azure_stt_key")
-	viper.SetDefault("azure.tts_key", "your_azure_tts_key")
-	viper.SetDefault("azure.region", "eastus")
-	viper.SetDefault("google.stt_key", "your_google_stt_key")
-	viper.SetDefault("google.tts_key", "your_google_tts_key")
-	viper.SetDefault("openai.api_key", "your_openai_api_key")
-	viper.SetDefault("logging.level", "debug")
+	// ... 其他配置项
 }

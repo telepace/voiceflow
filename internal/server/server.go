@@ -8,7 +8,6 @@ import (
 
 type Server struct {
 	upgrader websocket.Upgrader
-	// 其他需要的字段
 }
 
 func NewServer() *Server {

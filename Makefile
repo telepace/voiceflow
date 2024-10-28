@@ -65,7 +65,7 @@ GIT_COMMIT:=$(shell git rev-parse HEAD)
 
 IMG ?= ghcr.io/telepace/voiceflow:latest
 
-BUILDFILE = "./main.go"
+BUILDFILE = "./voiceflow.go"
 BUILDAPP = "$(OUTPUT_DIR)/"
 
 # Define the directory you want to copyright
@@ -145,7 +145,7 @@ ifeq ($(origin GOBIN), undefined)
 	GOBIN := $(GOPATH)/bin
 endif
 
-COMMANDS ?= $(filter-out %.md, $(wildcard ${ROOT_DIR}/cmd/*/*.go))
+COMMANDS ?= $(filter-out %.md, $(wildcard ${ROOT_DIR}/cmd/voiceflow/voiceflow.go))
 BINS ?= $(foreach cmd,${COMMANDS},$(notdir ${cmd}))
 
 ifeq (${COMMANDS},)

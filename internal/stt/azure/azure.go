@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/telepace/voiceflow/pkg/config"
+	"github.com/telepace/voiceflow/pkg/logger"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/telepace/voiceflow/internal/config"
 )
 
 type STT struct {
@@ -18,7 +18,10 @@ type STT struct {
 
 // NewAzureSTT 创建并返回一个新的 AzureSTT 实例
 func NewAzureSTT() *STT {
-	cfg := config.GetConfig()
+	cfg, err := config.GetConfig()
+	if err != nil {
+		logger.Fatalf("配置初始化失败:", err)
+	}
 	return &STT{
 		apiKey:   cfg.Azure.STTKey,
 		region:   cfg.Azure.Region,

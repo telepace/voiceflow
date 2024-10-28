@@ -2,13 +2,13 @@ package server
 
 import (
 	"encoding/json"
+	"github.com/telepace/voiceflow/pkg/config"
 	"github.com/telepace/voiceflow/pkg/logger"
 	"log"
 	"net/http"
 	"sync"
 
 	"github.com/gorilla/websocket"
-	"github.com/telepace/voiceflow/internal/config"
 	"github.com/telepace/voiceflow/internal/llm"
 	"github.com/telepace/voiceflow/internal/storage"
 	"github.com/telepace/voiceflow/internal/stt"
@@ -26,7 +26,10 @@ var (
 
 // 初始化服务实例
 func initServices() {
-	cfg := config.GetConfig()
+	cfg, err := config.GetConfig()
+	if err != nil {
+		logger.Fatalf("配置初始化失败: %v", err)
+	}
 	sttService = stt.NewService(cfg.STT.Provider)
 	ttsService = tts.NewService(cfg.TTS.Provider)
 	llmService = llm.NewService(cfg.LLM.Provider)
@@ -58,7 +61,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 		serviceLock.RUnlock()
 
 		if mt == websocket.TextMessage {
-			logger.Logger.Debug("Received text message")
+			logger.Debug("Received text message")
 			// 处理文字消息
 			var msg map[string]string
 			if err := json.Unmarshal(data, &msg); err != nil {
@@ -84,19 +87,19 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 			// 返回音频 URL 给前端
 			ws.WriteJSON(map[string]string{"audio_url": audioURL})
 		} else if mt == websocket.BinaryMessage {
-			logger.Logger.Debug("Received binary message")
+			logger.Debug("Received binary message")
 			// 处理音频消息
 			// 使用 STT 服务将语音转换为文字
 			text, err := currentSTTService.Recognize(data)
 			if err != nil {
-				log.Printf("STT error: %v", err)
+				logger.Errorf("STT error: %v", err)
 				continue
 			}
 
 			// 调用 LLM 服务获取响应
 			responseText, err := currentLLMService.GetResponse(text)
 			if err != nil {
-				log.Printf("LLM error: %v", err)
+				logger.Errorf("LLM error: %v", err)
 				continue
 			}
 

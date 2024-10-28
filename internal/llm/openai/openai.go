@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/telepace/voiceflow/pkg/config"
+	"github.com/telepace/voiceflow/pkg/logger"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/telepace/voiceflow/internal/config"
 )
 
 // OpenAILLM 结构体存储 OpenAI 交互所需的信息
@@ -19,7 +19,10 @@ type OpenAILLM struct {
 
 // NewOpenAILLM 创建一个新的 OpenAILLM 实例
 func NewOpenAILLM() *OpenAILLM {
-	cfg := config.GetConfig()
+	cfg, err := config.GetConfig()
+	if err != nil {
+		logger.Fatalf("配置初始化失败: %v", err)
+	}
 	return &OpenAILLM{
 		apiKey:   cfg.OpenAI.APIKey,
 		endpoint: "https://api.openai.com/v1/completions", // 具体API路径

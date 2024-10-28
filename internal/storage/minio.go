@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid" // 用于生成唯一文件名
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/telepace/voiceflow/internal/config"
+	"github.com/telepace/voiceflow/pkg/config"
+	"github.com/telepace/voiceflow/pkg/logger"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -21,14 +22,18 @@ type MinIOService struct {
 
 // NewMinIOService 创建并返回 MinIO 客户端
 func NewMinIOService() *MinIOService {
-	cfg := config.GetConfig()
+	cfg, err := config.GetConfig()
+	ctx := context.Background()
+	if err != nil {
+		logger.Fatal(ctx, "配置初始化失败:", err)
+	}
 
 	minioClient, err := minio.New(cfg.MinIO.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.MinIO.AccessKey, cfg.MinIO.SecretKey, ""),
 		Secure: cfg.MinIO.Secure,
 	})
 	if err != nil {
-		log.Fatalf("Failed to create MinIO client: %v", err)
+		logger.Fatal(ctx, "Failed to create MinIO client:", err)
 	}
 
 	return &MinIOService{

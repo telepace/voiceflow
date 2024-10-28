@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/telepace/voiceflow/pkg/config"
+	"github.com/telepace/voiceflow/pkg/logger"
 	"io"
 	"net/http"
-
-	"github.com/telepace/voiceflow/internal/config"
 )
 
 type GoogleTTS struct {
@@ -18,7 +18,10 @@ type GoogleTTS struct {
 
 // NewGoogleTTS 创建并返回一个新的 GoogleTTS 实例
 func NewGoogleTTS() *GoogleTTS {
-	cfg := config.GetConfig()
+	cfg, err := config.GetConfig()
+	if err != nil {
+		logger.Fatalf("配置初始化失败: %v", err)
+	}
 	return &GoogleTTS{
 		apiKey: cfg.Google.TTSKey,
 		voice:  "en-US-Wavenet-D", // 默认的 Google TTS 语音

@@ -14,7 +14,7 @@ minio:
   secure: true  # 如果需要使用 HTTPS 连接，设置为 true
 
 stt:
-  provider: azure  # 可选值：azure、google、local
+  provider: assemblyai  # 可选值：azure、google、local、assemblyai
 
 tts:
   provider: google  # 可选值：azure、google、local
@@ -35,4 +35,7 @@ openai:
   api_key: "your_openai_api_key"
 
 logging:
-  level: debug
+  level: Debug
+
+assemblyai:
+  api_key: "your_assemblyai_api_key"

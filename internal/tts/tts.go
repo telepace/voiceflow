@@ -14,7 +14,7 @@ type Service interface {
 
 // NewService 根据配置返回相应的 TTS 服务实现
 func NewService(provider string) Service {
-	logger.Logger.Debugf("Using TTS provider: %s", provider)
+	logger.Debugf("Using TTS provider: %s", provider)
 	switch provider {
 	case "azure":
 		return azure.NewAzureTTS() // 调用 Azure TTS 实现
