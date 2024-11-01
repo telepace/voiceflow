@@ -26,6 +26,8 @@ FROM ghcr.io/telepace/ai_feedback_production_ubuntu:latest
 
 WORKDIR ${TELEPACE_APP}
 
+EXPOSE 80
+
 COPY --from=builder /usr/bin/voiceflow ./bin/voiceflow
 
 ENTRYPOINT ["./bin/voiceflow"]
