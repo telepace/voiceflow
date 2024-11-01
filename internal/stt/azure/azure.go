@@ -1,15 +1,66 @@
 package azure
 
-type AzureSTT struct {
-	// Azure STT 所需的字段
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"github.com/telepace/voiceflow/pkg/config"
+	"github.com/telepace/voiceflow/pkg/logger"
+	"io/ioutil"
+	"net/http"
+)
+
+type STT struct {
+	apiKey   string
+	region   string
+	endpoint string
 }
 
-func NewAzureSTT() *AzureSTT {
-	return &AzureSTT{
-		// 初始化
+// NewAzureSTT 创建并返回一个新的 AzureSTT 实例
+func NewAzureSTT() *STT {
+	cfg, err := config.GetConfig()
+	if err != nil {
+		logger.Fatalf("配置初始化失败:", err)
+	}
+	return &STT{
+		apiKey:   cfg.Azure.STTKey,
+		region:   cfg.Azure.Region,
+		endpoint: fmt.Sprintf("https://%s.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1", cfg.Azure.Region),
 	}
 }
 
-func (a *AzureSTT) Recognize(audioData []byte) (string, error) {
-	// 调用 Azure 的 API 进行语音识别
+// Recognize 调用 Azure 的 STT API 将音频数据转换为文本
+func (a *STT) Recognize(audioData []byte) (string, error) {
+	req, err := http.NewRequest("POST", a.endpoint, bytes.NewReader(audioData))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Ocp-Apim-Subscription-Key", a.apiKey)
+	req.Header.Set("Content-Type", "audio/wav; codec=\"audio/pcm\"; samplerate=16000")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := ioutil.ReadAll(resp.Body)
+		return "", fmt.Errorf("azure STT error: %s", string(body))
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	// 假设返回的结果中有识别文本（JSON 格式，需解析）
+	var result map[string]interface{}
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return "", err
+	}
+
+	return result["DisplayText"].(string), nil
 }

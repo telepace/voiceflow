@@ -1,37 +1,42 @@
+// server.go
 package server
 
 import (
-    "log"
-    "net/http"
-	"fmt"
+	"github.com/telepace/voiceflow/pkg/logger"
+	"net/http"
 
-    "github.com/gorilla/websocket"
-    "github.com/telepace/voiceflow/internal/config"
+	"github.com/gorilla/websocket"
 )
 
 type Server struct {
-    upgrader websocket.Upgrader
-    // 其他需要的字段
+	upgrader websocket.Upgrader
 }
 
 func NewServer() *Server {
-    return &Server{
-        upgrader: websocket.Upgrader{
-            ReadBufferSize:  1024,
-            WriteBufferSize: 1024,
-            CheckOrigin: func(r *http.Request) bool {
-                return true // 根据需要进行跨域处理
-            },
-        },
-    }
+	return &Server{
+		upgrader: websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		},
+	}
 }
 
-func (s *Server) Start() {
-    http.HandleFunc("/ws", s.handleConnections)
-    cfg := config.GetConfig()
-    addr := fmt.Sprintf(":%d", cfg.Server.Port)
-    log.Printf("WebSocket server started on %s", addr)
-    if err := http.ListenAndServe(addr, nil); err != nil {
-        log.Fatalf("Server error: %v", err)
-    }
+func (s *Server) SetupRoutes(mux *http.ServeMux) {
+	if s == nil {
+		logger.Error("Server instance is nil in SetupRoutes")
+	} else {
+		logger.Info("Server instance is not nil in SetupRoutes")
+	}
+
+	// 使用闭包来包装方法调用，确保正确捕获接收者 s
+	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		s.handleConnections(w, r)
+	})
+
+	mux.HandleFunc("/config", func(w http.ResponseWriter, r *http.Request) {
+		s.HandleConfig(w, r)
+	})
 }

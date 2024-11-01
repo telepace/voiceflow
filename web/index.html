@@ -1,0 +1,32 @@
+<!--index.html-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VoiceFlow Chat</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- 配置 WebSocket URL -->
+    <script>
+        const WEBSOCKET_URL = 'ws://localhost:18080/ws'; // 可以通过环境变量或配置文件注入
+    </script>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>VoiceFlow Chat</h2>
+        </div>
+        <div class="chat-window" id="chat-window">
+            <!-- 消息将被添加到这里 -->
+        </div>
+        <div class="chat-input">
+            <input type="text" id="text-input" placeholder="输入文字消息...">
+            <button id="send-text-btn">发送</button>
+            <button id="record-voice-btn">🎤</button>
+            <input type="file" id="upload-audio-input" accept="audio/*" style="display: none;">
+            <button id="upload-audio-btn">上传音频</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

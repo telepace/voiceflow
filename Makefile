@@ -46,6 +46,12 @@ TMP_DIR := $(OUTPUT_DIR)/tmp
 $(shell mkdir -p $(TMP_DIR))
 endif
 
+# LOG_DIR
+ifeq ($(origin LOG_DIR),undefined)
+LOG_DIR := $(OUTPUT_DIR)/logs
+$(shell mkdir -p $(LOG_DIR))
+endif
+
 ifeq ($(origin VERSION), undefined)
 VERSION := $(shell git describe --tags --always --match="v*" --dirty | sed 's/-/./g')	#v2.3.3.631.g00abdc9b.dirty
 endif
@@ -59,7 +65,7 @@ GIT_COMMIT:=$(shell git rev-parse HEAD)
 
 IMG ?= ghcr.io/telepace/voiceflow:latest
 
-BUILDFILE = "./main.go"
+BUILDFILE = "./voiceflow.go"
 BUILDAPP = "$(OUTPUT_DIR)/"
 
 # Define the directory you want to copyright
@@ -139,7 +145,7 @@ ifeq ($(origin GOBIN), undefined)
 	GOBIN := $(GOPATH)/bin
 endif
 
-COMMANDS ?= $(filter-out %.md, $(wildcard ${ROOT_DIR}/cmd/*/*.go))
+COMMANDS ?= $(filter-out %.md, $(wildcard ${ROOT_DIR}/cmd/voiceflow/voiceflow.go))
 BINS ?= $(foreach cmd,${COMMANDS},$(notdir ${cmd}))
 
 ifeq (${COMMANDS},)
@@ -150,6 +156,23 @@ ifeq (${BINS},)
 endif
 
 EXCLUDE_TESTS=github.com/telepace/CloudBuildAI/test
+
+# # 获取所有二进制文件名
+# BINS := $(foreach cmd,${COMMANDS},$(notdir ${cmd}))
+
+# # 定义 PID 文件和日志文件的路径
+# define PID_FILE
+# $(OUTPUT_DIR)/$1.pid
+# endef
+
+# define LOG_FILE
+# $(LOG_DIR)/$1.log
+# endef
+
+# Define the binary, PID file, and log file paths
+BINARY := $(BIN_DIR)/platforms/$(GOOS)/$(GOARCH)/voiceflow$(GO_OUT_EXT)
+PID_FILE := $(OUTPUT_DIR)/voiceflow.pid
+LOG_FILE := $(LOG_DIR)/voiceflow.log
 
 # ==============================================================================
 # Build
@@ -192,6 +215,56 @@ go.build.%:
 ## build-multiarch: Build binaries for multiple platforms.
 .PHONY: build-multiarch
 build-multiarch: go.build.verify $(foreach p,$(PLATFORMS),$(addprefix go.build., $(addprefix $(p)., $(BINS))))
+
+## start: 启动 voiceflow 服务。
+.PHONY: start
+start:
+	@if [ ! -f $(BINARY) ]; then \
+		$(MAKE) build; \
+	fi
+	@echo "Starting voiceflow..."
+	@mkdir -p $(LOG_DIR)
+	@nohup $(BINARY) > $(LOG_FILE) 2>&1 & \
+	PID=$$!; \
+	echo $$PID > $(PID_FILE); \
+	echo "Started voiceflow with PID $$PID"
+
+## stop: 停止 voiceflow 服务。
+.PHONY: stop
+stop:
+	@if [ -f $(PID_FILE) ]; then \
+		PID=`cat $(PID_FILE)`; \
+		if kill -0 $$PID >/dev/null 2>&1; then \
+			kill $$PID; \
+			echo "Stopped voiceflow"; \
+		else \
+			echo "Process not running"; \
+		fi; \
+		rm $(PID_FILE); \
+	else \
+		echo "voiceflow is not running"; \
+	fi
+
+## restart: 重启 voiceflow 服务。
+.PHONY: restart
+restart:
+	$(MAKE) stop
+	$(MAKE) build
+	$(MAKE) start
+
+## check: 检查 voiceflow 服务是否正在运行。
+.PHONY: check
+check:
+	@if [ -f $(PID_FILE) ]; then \
+		PID=`cat $(PID_FILE)`; \
+		if ps -p $$PID > /dev/null 2>&1; then \
+			echo "voiceflow is running with PID $$PID"; \
+		else \
+			echo "voiceflow is not running"; \
+		fi; \
+	else \
+		echo "voiceflow is not running"; \
+	fi
 
 # ==============================================================================
 # Targets
@@ -298,7 +371,7 @@ release.ensure-tag: tools.verify.gsemver
 ## clean: Clean all builds.
 .PHONY: clean
 clean:
-	@echo "===========> Cleaning all builds TMP_DIR($(TMP_DIR)) AND BIN_DIR($(BIN_DIR))"
+	@echo "===========> Cleaning all builds TMP_DIR($(TMP_DIR)) AND BIN_DIR($(BIN_DIR)) AND LOG_DIR($(LOG_DIR))"
 	@-rm -vrf $(TMP_DIR) $(BIN_DIR)
 	@echo "===========> End clean..."
 
