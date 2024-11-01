@@ -15,9 +15,6 @@ WORKDIR /telepace/app
 ENV GO111MODULE=$GO111MODULE
 ENV GOPROXY=$GOPROXY
 
-COPY go.mod go.sum ./
-RUN go mod download
-
 COPY . .
 
 RUN make build BINS=voiceflow

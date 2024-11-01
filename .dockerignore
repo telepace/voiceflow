@@ -1,0 +1,82 @@
+# Temporary files
+_output/
+*.log
+*.tmp
+*.temp
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# Documentation
+*.md
+docs/
+CONTRIBUTING.md
+LICENSE
+OWNERS
+CODEOWNERS
+
+# Development and build files
+Makefile
+*.Makefile
+*.mk
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.bak
+
+# Test files
+test/
+*_test.go
+*.test
+
+# Configuration and environment files
+.env
+*.env
+*.yaml
+*.yml
+!configs/config.yaml
+
+# Tools and dependencies
+vendor/
+node_modules/
+tools/
+scripts/
+
+# Debug files
+*.pprof
+*.prof
+*.trace
+
+# Binary files
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Project specific
+assets/
+examples/
+third_party/
+init/
+sweep.yaml
+
+# Logs
+*.log
+logs/
+log/
+
+# Web development files
+*.css
+*.js
+*.html
+web/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
