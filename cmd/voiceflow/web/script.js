@@ -10,7 +10,11 @@ ws.onopen = () => {
 
 ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
-    if (data.text) {
+    if (data.partial_text) {
+        // 显示部分转录文本
+        updatePartialMessage('助手', data.partial_text);
+    } else if (data.text) {
+        // 显示最终转录文本
         appendMessage('助手', data.text);
     } else if (data.audio_url) {
         appendAudioMessage('助手', data.audio_url);
@@ -58,27 +62,44 @@ function startRecording() {
             recordVoiceBtn.classList.add('recording');
 
             mediaRecorder = new MediaRecorder(stream);
-            mediaRecorder.start();
+
+            // 设置 timeslice 控制音频数据可用的频率（例如每250毫秒）
+            const timeslice = 250; // 时间，单位为毫秒
+
+            mediaRecorder.start(timeslice);
 
             mediaRecorder.ondataavailable = e => {
-                audioChunks.push(e.data);
+                if (e.data && e.data.size > 0) {
+                    // 将每个音频块实时发送到后端
+                    sendAudioChunk(e.data);
+                }
             };
 
             mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                audioChunks = [];
-                sendAudioMessage(audioBlob);
                 isRecording = false;
                 recordVoiceBtn.classList.remove('recording');
 
                 // 停止所有音频轨道，释放麦克风
                 mediaStream.getTracks().forEach(track => track.stop());
                 mediaStream = null;
+
+                // 可选：向后端发送结束信号
+                ws.send(JSON.stringify({ end: true }));
             };
         })
         .catch(err => {
             console.error('麦克风访问错误:', err);
         });
+}
+
+function sendAudioChunk(audioBlob) {
+    // 将音频 blob 转换为 ArrayBuffer
+    const reader = new FileReader();
+    reader.onload = () => {
+        // 将音频块发送到后端
+        ws.send(reader.result);
+    };
+    reader.readAsArrayBuffer(audioBlob);
 }
 
 function stopRecording() {
@@ -141,7 +162,37 @@ function sendAudioMessage(audioBlob) {
     reader.readAsArrayBuffer(audioBlob);
 }
 
+let partialMessageDiv;
+
+function updatePartialMessage(user, text) {
+    if (!partialMessageDiv) {
+        partialMessageDiv = document.createElement('div');
+        partialMessageDiv.classList.add('message');
+
+        const userSpan = document.createElement('span');
+        userSpan.classList.add('user');
+        userSpan.textContent = `${user}: `;
+
+        const textSpan = document.createElement('span');
+        textSpan.classList.add('partial-text');
+
+        partialMessageDiv.appendChild(userSpan);
+        partialMessageDiv.appendChild(textSpan);
+        chatWindow.appendChild(partialMessageDiv);
+    }
+
+    const textSpan = partialMessageDiv.querySelector('.partial-text');
+    textSpan.textContent = text;
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+// 当最终文本到达时，替换部分转录文本
 function appendMessage(user, text) {
+    if (partialMessageDiv) {
+        partialMessageDiv.remove();
+        partialMessageDiv = null;
+    }
+    // 继续现有代码，添加消息
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('message');
 
