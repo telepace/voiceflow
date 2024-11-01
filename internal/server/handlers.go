@@ -25,7 +25,7 @@ var (
 )
 
 // 初始化服务实例
-func initServices() {
+func InitServices() {
 	cfg, err := config.GetConfig()
 	if err != nil {
 		logger.Fatalf("配置初始化失败: %v", err)
@@ -148,7 +148,7 @@ func (s *Server) HandleConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 根据新的配置重新初始化服务实例
-	initServices()
+	//initServices()
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Configuration updated"))

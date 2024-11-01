@@ -60,6 +60,8 @@ func run(cmd *cobra.Command, args []string) error {
 	// 记录启动信息
 	logger.InfoContextf(ctx, "Starting VoiceFlow server with config: %+v", cfg)
 
+	serverpkg.InitServices()
+
 	// Set up HTTP server
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.Dir("./web")))

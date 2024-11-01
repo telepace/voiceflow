@@ -136,7 +136,14 @@ func Warnf(format string, args ...interface{}) {
 }
 
 func Error(args ...interface{}) {
-	getEntry(nil).Error(args...)
+	var formattedArgs []interface{}
+	for _, arg := range args {
+		formattedArgs = append(formattedArgs, arg)
+		if len(formattedArgs) > 1 {
+			formattedArgs = append(formattedArgs, " ")
+		}
+	}
+	getEntry(nil).Error(formattedArgs...)
 }
 
 func Errorf(format string, args ...interface{}) {

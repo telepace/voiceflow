@@ -7,6 +7,18 @@ import (
 	"sync"
 )
 
+type HuoshanConfig struct {
+	AccessKey string `mapstructure:"access_key"`
+	AppKey    string `mapstructure:"app_key"`
+	WsURL     string `mapstructure:"ws_url"`
+	UID       string `yaml:"uid"`
+	Rate      int    `yaml:"rate"`
+	Format    string `yaml:"format"`
+	Bits      int    `yaml:"bits"`
+	Channel   int    `yaml:"channel"`
+	Codec     string `yaml:"codec"`
+}
+
 type Config struct {
 	Server struct {
 		Port      int
@@ -28,7 +40,8 @@ type Config struct {
 		APIKey string `mapstructure:"api_key"`
 	}
 	OpenAI struct {
-		APIKey string `mapstructure:"api_key"`
+		APIKey  string `mapstructure:"api_key"`
+		BaseURL string `mapstructure:"base_url"`
 	}
 	Google struct {
 		TTSKey string `mapstructure:"tts_key"`
@@ -39,7 +52,8 @@ type Config struct {
 		STTKey string `mapstructure:"stt_key"`
 		Region string
 	}
-	MinIO struct {
+	Huoshan HuoshanConfig `yaml:"huoshan"`
+	MinIO   struct {
 		Enabled    bool   `mapstructure:"enabled"`
 		BucketName string `mapstructure:"bucket_name"`
 		Endpoint   string `mapstructure:"endpoint"`

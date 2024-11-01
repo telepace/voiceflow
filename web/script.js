@@ -1,3 +1,4 @@
+// script.js
 // 获取 WebSocket URL
 const ws = new WebSocket(WEBSOCKET_URL);
 
