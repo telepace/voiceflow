@@ -85,10 +85,13 @@ jobs:
           file: ./build/images/voiceflow/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta1.outputs.tags }}
-          labels: ${{ steps.meta1.outputs.labels }}
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
+          build-args: |
+            VERSION=${{ steps.metadata.outputs.version }}
+          provenance: true
 
       # 8. 可选：安全扫描（例如 Trivy）
       - name: Scan Docker image for vulnerabilities
