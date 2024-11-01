@@ -25,7 +25,7 @@ RUN make build BINS=voiceflow
 RUN cp /telepace/app/_output/bin/platforms/$(go env GOOS)/$(go env GOARCH)/voiceflow /usr/bin/voiceflow
 
 
-FROM ghcr.io/openim-sigs/openim-bash-image:latest
+FROM ghcr.io/telepace/ai_feedback_production_ubuntu:latest
 
 WORKDIR ${TELEPACE_APP}
 
