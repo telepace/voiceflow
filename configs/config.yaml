@@ -14,7 +14,7 @@ minio:
   secure: true  # 如果需要使用 HTTPS 连接，设置为 true
 
 stt:
-  provider: huoshan  # 可选值：azure、google、local、assemblyai、huoshan
+  provider: volcengine  # 可选值：azure、google、local、assemblyai、volcengine
 
 tts:
   provider: google  # 可选值：azure、google、local
@@ -39,7 +39,7 @@ openai:
   # OPENAI_BASE_URL='https://api.chatanywhere.tech'  # Domestic version
   base_url: ""
 
-huoshan:
+volcengine:
   access_key: ''
   app_key: ''
   ws_url: ''

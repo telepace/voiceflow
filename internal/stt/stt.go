@@ -5,8 +5,8 @@ import (
 	"github.com/telepace/voiceflow/internal/stt/assemblyai"
 	"github.com/telepace/voiceflow/internal/stt/azure"
 	"github.com/telepace/voiceflow/internal/stt/google"
-	"github.com/telepace/voiceflow/internal/stt/huoshan"
 	"github.com/telepace/voiceflow/internal/stt/local"
+	"github.com/telepace/voiceflow/internal/stt/volcengine"
 	"github.com/telepace/voiceflow/pkg/logger"
 )
 
@@ -25,8 +25,8 @@ func NewService(provider string) Service {
 		return google.NewGoogleSTT()
 	case "assemblyai":
 		return assemblyai.NewAssemblyAI()
-	case "huoshan":
-		return huoshan.NewHuoshanSTT()
+	case "volcengine":
+		return volcengine.NewVolcengineSTT()
 	case "local":
 		return local.NewLocalSTT()
 	default:

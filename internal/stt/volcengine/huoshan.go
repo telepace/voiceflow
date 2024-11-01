@@ -1,5 +1,5 @@
-// huoshan.go
-package huoshan
+// volcengine.go
+package volcengine
 
 import (
 	"bytes"
@@ -27,21 +27,21 @@ type STT struct {
 	appKey    string
 }
 
-func NewHuoshanSTT() *STT {
+func NewVolcengineSTT() *STT {
 	cfg, err := config.GetConfig()
 	if err != nil {
 		logger.Fatalf("配置初始化失败: %v", err)
 	}
 	return &STT{
-		wsURL:     cfg.Huoshan.WsURL,
-		uid:       cfg.Huoshan.UID,
-		rate:      cfg.Huoshan.Rate,
-		format:    cfg.Huoshan.Format,
-		bits:      cfg.Huoshan.Bits,
-		channel:   cfg.Huoshan.Channel,
-		codec:     cfg.Huoshan.Codec,
-		accessKey: cfg.Huoshan.AccessKey,
-		appKey:    cfg.Huoshan.AppKey,
+		wsURL:     cfg.Volcengine.WsURL,
+		uid:       cfg.Volcengine.UID,
+		rate:      cfg.Volcengine.Rate,
+		format:    cfg.Volcengine.Format,
+		bits:      cfg.Volcengine.Bits,
+		channel:   cfg.Volcengine.Channel,
+		codec:     cfg.Volcengine.Codec,
+		accessKey: cfg.Volcengine.AccessKey,
+		appKey:    cfg.Volcengine.AppKey,
 	}
 }
 

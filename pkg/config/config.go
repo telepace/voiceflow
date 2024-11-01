@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-type HuoshanConfig struct {
+type VolcengineConfig struct {
 	AccessKey string `mapstructure:"access_key"`
 	AppKey    string `mapstructure:"app_key"`
 	WsURL     string `mapstructure:"ws_url"`
@@ -52,8 +52,8 @@ type Config struct {
 		STTKey string `mapstructure:"stt_key"`
 		Region string
 	}
-	Huoshan HuoshanConfig `yaml:"huoshan"`
-	MinIO   struct {
+	Volcengine VolcengineConfig `yaml:"volcengine"`
+	MinIO      struct {
 		Enabled    bool   `mapstructure:"enabled"`
 		BucketName string `mapstructure:"bucket_name"`
 		Endpoint   string `mapstructure:"endpoint"`
