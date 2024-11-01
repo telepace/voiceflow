@@ -1,17 +1,14 @@
 server:
-  port: 18080
+  port: 80
   enable_tls: false
-
-web:
-  port: 18090
 
 minio:
   enabled: true
-  endpoint: localhost:9000
-  access_key: minioadmin
-  secret_key: minioadmin
+  endpoint: ''
+  access_key: ""
+  secret_key: ""
   bucket_name: 'telepace-pipeline'
-  secure: true  # 如果需要使用 HTTPS 连接，设置为 true
+  secure: true
 
 stt:
   provider: volcengine  # 可选值：azure、google、local、assemblyai、volcengine
