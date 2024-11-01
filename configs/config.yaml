@@ -46,6 +46,9 @@ volcengine:
   bits: 16
   channel: 1
   codec: "pcm"
+  # 小时版：volc.bigasr.sauc.duration
+  # 并发版：volc.bigasr.sauc.concurrent
+  resource_id: 'volc.bigasr.sauc.duration'
 
 # 日志配置
 logging:

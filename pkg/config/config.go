@@ -8,15 +8,16 @@ import (
 )
 
 type VolcengineConfig struct {
-	AccessKey string `mapstructure:"access_key"`
-	AppKey    string `mapstructure:"app_key"`
-	WsURL     string `mapstructure:"ws_url"`
-	UID       string `yaml:"uid"`
-	Rate      int    `yaml:"rate"`
-	Format    string `yaml:"format"`
-	Bits      int    `yaml:"bits"`
-	Channel   int    `yaml:"channel"`
-	Codec     string `yaml:"codec"`
+	AccessKey  string `mapstructure:"access_key"`
+	AppKey     string `mapstructure:"app_key"`
+	WsURL      string `mapstructure:"ws_url"`
+	ResourceID string `mapstructure:"resource_id"`
+	UID        string `yaml:"uid"`
+	Rate       int    `yaml:"rate"`
+	Format     string `yaml:"format"`
+	Bits       int    `yaml:"bits"`
+	Channel    int    `yaml:"channel"`
+	Codec      string `yaml:"codec"`
 }
 
 type Config struct {

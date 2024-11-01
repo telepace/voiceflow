@@ -67,6 +67,9 @@ var rootCmd = &cobra.Command{
 func run(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
+	if err := ensureDirectories(); err != nil {
+		logger.Fatalf("Failed to ensure directories: %v", err)
+	}
 	// Load configuration
 	cfg, err := config.GetConfig()
 	if err != nil {
@@ -102,7 +105,7 @@ func run(cmd *cobra.Command, args []string) error {
 	// Set up HTTP server
 	mux := http.NewServeMux()
 	if err := setupFileServers(mux); err != nil {
-		return fmt.Errorf("failed to setup file servers: %w", err)
+		logger.Fatalf("Failed to setup file servers: %v", err)
 	}
 
 	// Initialize WebSocket server
