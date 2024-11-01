@@ -19,9 +19,6 @@ OWNERS
 CODEOWNERS
 
 # Development and build files
-Makefile
-*.Makefile
-*.mk
 .vscode/
 .idea/
 *.swp
@@ -45,7 +42,6 @@ test/
 vendor/
 node_modules/
 tools/
-scripts/
 
 # Debug files
 *.pprof
@@ -70,11 +66,6 @@ sweep.yaml
 logs/
 log/
 
-# Web development files
-*.css
-*.js
-*.html
-web/
 
 # macOS system files
 .DS_Store
