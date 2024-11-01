@@ -3,9 +3,11 @@ package main
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"github.com/joho/godotenv"
 	"github.com/telepace/voiceflow/pkg/config"
+	"io/fs"
 	"net/http"
 	"os"
 	"strings"
@@ -19,6 +21,41 @@ import (
 )
 
 var cfgFile string
+
+//go:embed web/*
+var webFS embed.FS
+
+// setupFileServers sets up the file servers for both embedded and local files
+func setupFileServers(mux *http.ServeMux) error {
+	// Setup web content from embedded files
+	webContent, err := fs.Sub(webFS, "web")
+	if err != nil {
+		return err
+	}
+	mux.Handle("/", http.FileServer(http.FS(webContent)))
+
+	// Setup audio files from local directory
+	// This allows for dynamic audio file serving without embedding
+	mux.Handle("/audio_files/", http.StripPrefix("/audio_files/",
+		http.FileServer(http.Dir("audio_files"))))
+
+	return nil
+}
+
+// ensureDirectories creates necessary directories if they don't exist
+func ensureDirectories() error {
+	dirs := []string{
+		"audio_files",
+	}
+
+	for _, dir := range dirs {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("failed to create directory %s: %w", dir, err)
+		}
+	}
+
+	return nil
+}
 
 var rootCmd = &cobra.Command{
 	Use:   "voiceflow",
@@ -64,8 +101,9 @@ func run(cmd *cobra.Command, args []string) error {
 
 	// Set up HTTP server
 	mux := http.NewServeMux()
-	mux.Handle("/", http.FileServer(http.Dir("./web")))
-	mux.Handle("/audio_files/", http.StripPrefix("/audio_files/", http.FileServer(http.Dir("./audio_files"))))
+	if err := setupFileServers(mux); err != nil {
+		return fmt.Errorf("failed to setup file servers: %w", err)
+	}
 
 	// Initialize WebSocket server
 	wsServer := serverpkg.NewServer()
@@ -147,7 +185,7 @@ func init() {
 func initConfig() {
 	// 加载 .env 文件
 	if err := godotenv.Load(); err != nil {
-		logger.Fatal("No .env file found or failed to load, proceeding without it")
+		logger.Warn("No .env file found or failed to load, proceeding without it")
 	} else {
 		logger.Info(".env file loaded")
 	}
