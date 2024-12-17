@@ -1,5 +1,5 @@
 server:
-  port: 80
+  port: 18080
   enable_tls: false
 
 minio:
@@ -11,13 +11,16 @@ minio:
   secure: true
 
 stt:
-  provider: volcengine  # 可选值：azure、google、local、assemblyai、volcengine
+  # 可选值：azure、google、local、assemblyai、volcengine、 aws
+  provider: volcengine
 
 tts:
-  provider: google  # 可选值：azure、google、local
+  # 可选值：azure、google、local
+  provider: google
 
 llm:
-  provider: openai  # 可选值：openai、local
+  # 可选值：openai、local
+  provider: openai
 
 azure:
   stt_key: "your_azure_stt_key"
@@ -27,6 +30,11 @@ azure:
 google:
   stt_key: "your_google_stt_key"
   tts_key: "your_google_tts_key"
+
+aws:
+    region: "us-east-1"
+    access_key_id: ''
+    secret_access_key: ''
 
 openai:
   api_key: ""
@@ -67,7 +75,7 @@ logging:
   # 是否压缩旧日志文件
   compress: true
   # 是否在日志中包含调用者信息
-  report_caller: false
+  report_caller: true
 
 assemblyai:
-  api_key: ""
+  api_key:

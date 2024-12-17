@@ -12,7 +12,7 @@ ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
     if (data.partial_text) {
         // 显示部分转录文本
-        updatePartialMessage('助手', data.partial_text);
+        updatePartialMessage('你', data.partial_text);
     } else if (data.text) {
         // 显示最终转录文本
         appendMessage('助手', data.text);
@@ -105,6 +105,7 @@ function sendAudioChunk(audioBlob) {
 function stopRecording() {
     if (mediaRecorder && isRecording) {
         mediaRecorder.stop();
+        ws.send(JSON.stringify({ end: true }));
     }
 }
 
@@ -185,6 +186,23 @@ function updatePartialMessage(user, text) {
     textSpan.textContent = text;
     chatWindow.scrollTop = chatWindow.scrollHeight;
 }
+
+// 当录音结束时，清除部分消息
+function clearPartialMessage() {
+    if (partialMessageDiv) {
+        partialMessageDiv.remove();
+        partialMessageDiv = null;
+    }
+}
+
+// 修改录音停止的函数，添加清除部分消息的逻辑
+function stopRecording() {
+    if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        clearPartialMessage();
+    }
+}
+
 
 // 当最终文本到达时，替换部分转录文本
 function appendMessage(user, text) {

@@ -20,6 +20,12 @@ type VolcengineConfig struct {
 	Codec      string `yaml:"codec"`
 }
 
+type AWSConfig struct {
+	AccessKeyID     string `mapstructure:"access_key_id"`
+	SecretAccessKey string `mapstructure:"secret_access_key"`
+	Region          string `yaml:"region"`
+}
+
 type Config struct {
 	Server struct {
 		Port      int
@@ -53,6 +59,7 @@ type Config struct {
 		STTKey string `mapstructure:"stt_key"`
 		Region string
 	}
+	AWS        AWSConfig        `yaml:"aws"`
 	Volcengine VolcengineConfig `yaml:"volcengine"`
 	MinIO      struct {
 		Enabled    bool   `mapstructure:"enabled"`

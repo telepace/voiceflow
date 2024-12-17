@@ -12,7 +12,7 @@ type recorder struct {
 	buffer []int16
 }
 
-func newRecorder(sampleRate int, framesPerBuffer int) (*recorder, error) {
+func NewRecorder(sampleRate int, framesPerBuffer int) (*recorder, error) {
 	buffer := make([]int16, framesPerBuffer)
 
 	stream, err := portaudio.OpenDefaultStream(1, 0, float64(sampleRate), framesPerBuffer, buffer)
