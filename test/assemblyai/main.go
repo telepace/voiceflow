@@ -65,7 +65,7 @@ func main() {
 
 	slog.Info("connected to real-time API", "sample_rate", sampleRate, "frames_per_buffer", framesPerBuffer)
 
-	rec, err := newRecorder(sampleRate, framesPerBuffer)
+	rec, err := NewRecorder(sampleRate, framesPerBuffer)
 	checkErr(err)
 
 	err = rec.Start()

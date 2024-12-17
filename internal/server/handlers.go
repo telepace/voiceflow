@@ -31,21 +31,12 @@ func InitServices() {
 		logger.Fatalf("配置初始化失败: %v", err)
 	}
 	sttService = stt.NewService(cfg.STT.Provider)
-	//ttsService = tts.NewService(cfg.TTS.Provider)
-	//llmService = llm.NewService(cfg.LLM.Provider)
-	//storageService = storage.NewService()
+	ttsService = tts.NewService(cfg.TTS.Provider)
+	llmService = llm.NewService(cfg.LLM.Provider)
+	storageService = storage.NewService()
 }
 
 func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
-
-	// 检查服务实例是否为空
-	if s == nil {
-		logger.Error("Server instance is nil in handleConnections")
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	} else {
-		logger.Infof("Server instance is not nil in handleConnections: %v", s)
-	}
 
 	// 升级 WebSocket 连接
 	ws, err := s.upgrader.Upgrade(w, r, nil)

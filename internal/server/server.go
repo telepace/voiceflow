@@ -1,4 +1,4 @@
-// server.go
+// internal/server/server.go
 package server
 
 import (

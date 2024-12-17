@@ -8,15 +8,22 @@ import (
 )
 
 type VolcengineConfig struct {
-	AccessKey string `mapstructure:"access_key"`
-	AppKey    string `mapstructure:"app_key"`
-	WsURL     string `mapstructure:"ws_url"`
-	UID       string `yaml:"uid"`
-	Rate      int    `yaml:"rate"`
-	Format    string `yaml:"format"`
-	Bits      int    `yaml:"bits"`
-	Channel   int    `yaml:"channel"`
-	Codec     string `yaml:"codec"`
+	AccessKey  string `mapstructure:"access_key"`
+	AppKey     string `mapstructure:"app_key"`
+	WsURL      string `mapstructure:"ws_url"`
+	ResourceID string `mapstructure:"resource_id"`
+	UID        string `yaml:"uid"`
+	Rate       int    `yaml:"rate"`
+	Format     string `yaml:"format"`
+	Bits       int    `yaml:"bits"`
+	Channel    int    `yaml:"channel"`
+	Codec      string `yaml:"codec"`
+}
+
+type AWSConfig struct {
+	AccessKeyID     string `mapstructure:"access_key_id"`
+	SecretAccessKey string `mapstructure:"secret_access_key"`
+	Region          string `yaml:"region"`
 }
 
 type Config struct {
@@ -52,6 +59,7 @@ type Config struct {
 		STTKey string `mapstructure:"stt_key"`
 		Region string
 	}
+	AWS        AWSConfig        `yaml:"aws"`
 	Volcengine VolcengineConfig `yaml:"volcengine"`
 	MinIO      struct {
 		Enabled    bool   `mapstructure:"enabled"`
