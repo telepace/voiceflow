@@ -3,8 +3,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"sync"
+
+	"github.com/spf13/viper"
 )
 
 type VolcengineConfig struct {
@@ -59,9 +60,33 @@ type Config struct {
 		STTKey string `mapstructure:"stt_key"`
 		Region string
 	}
-	AWS        AWSConfig        `yaml:"aws"`
-	Volcengine VolcengineConfig `yaml:"volcengine"`
-	MinIO      struct {
+	AWS        AWSConfig `yaml:"aws"`
+	Volcengine struct {
+		STT struct {
+			WsURL      string `mapstructure:"ws_url"`
+			UID        string `mapstructure:"uid"`
+			Rate       int    `mapstructure:"rate"`
+			Format     string `mapstructure:"format"`
+			Bits       int    `mapstructure:"bits"`
+			Channel    int    `mapstructure:"channel"`
+			Codec      string `mapstructure:"codec"`
+			AccessKey  string `mapstructure:"access_key"`
+			AppKey     string `mapstructure:"app_key"`
+			ResourceID string `mapstructure:"resource_id"`
+		} `mapstructure:"stt"`
+
+		TTS struct {
+			WsURL       string  `mapstructure:"ws_url"`
+			AppID       string  `mapstructure:"app_id"`
+			Token       string  `mapstructure:"token"`
+			VoiceType   string  `mapstructure:"voice_type"`
+			Encoding    string  `mapstructure:"encoding"`
+			SpeedRatio  float64 `mapstructure:"speed_ratio"`
+			VolumeRatio float64 `mapstructure:"volume_ratio"`
+			PitchRatio  float64 `mapstructure:"pitch_ratio"`
+		} `mapstructure:"tts"`
+	} `mapstructure:"volcengine"`
+	MinIO struct {
 		Enabled    bool   `mapstructure:"enabled"`
 		BucketName string `mapstructure:"bucket_name"`
 		Endpoint   string `mapstructure:"endpoint"`

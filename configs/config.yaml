@@ -15,16 +15,16 @@ stt:
   provider: volcengine
 
 tts:
-  # 可选值：azure、google、local
-  provider: google
+  # 可选值：azure、google、local、volcengine
+  provider: volcengine
 
 llm:
   # 可选值：openai、local
   provider: openai
 
 azure:
-  stt_key: "your_azure_stt_key"
-  tts_key: "your_azure_tts_key"
+  stt_key: ""
+  tts_key: ""
   region: "eastus"
 
 google:
@@ -45,22 +45,35 @@ openai:
   base_url: ""
 
 volcengine:
-  access_key: ''
-  app_key: ''
-  ws_url: ''
-  uid: "test"
-  rate: 16000
-  format: "pcm"
-  bits: 16
-  channel: 1
-  codec: "pcm"
-  # 小时版：volc.bigasr.sauc.duration
-  # 并发版：volc.bigasr.sauc.concurrent
-  resource_id: 'volc.bigasr.sauc.duration'
+  # 语音识别(STT)配置
+  stt:
+    ws_url: ''
+    uid: "test"
+    rate: 16000
+    format: "pcm"
+    bits: 16
+    channel: 1
+    codec: "pcm"
+    access_key: ''
+    app_key: ''
+    # 小时版：volc.bigasr.sauc.duration
+    # 并发版：volc.bigasr.sauc.concurrent
+    resource_id: 'volc.bigasr.sauc.duration'
+  
+  # 语音合成(TTS)配置
+  tts:
+    ws_url: "wss://openspeech.bytedance.com/api/v1/tts/ws_binary"
+    app_id: "your_app_id"
+    token: "your_token"
+    voice_type: "zh_female_sajiaonvyou_moon_bigtts"
+    encoding: "mp3"
+    speed_ratio: 1.0
+    volume_ratio: 1.0
+    pitch_ratio: 1.0
 
 # 日志配置
 logging:
-  # 日志级别（选项：debug（调试）、info（信息）、warn（警告）、error（错误）、fatal（致命错误））
+  # 日志级别（选项：debug���调试）、info（信息）、warn（警告）、error（错误）、fatal（致命错误））
   level: "info"
   # 日志格式（选项：json（JSON 格式）、text（文本格式））
   format: "text"

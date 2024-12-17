@@ -10,14 +10,14 @@ ws.onopen = () => {
 
 ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
-    if (data.partial_text) {
-        // 显示部分转录文本
-        updatePartialMessage('你', data.partial_text);
-    } else if (data.text) {
-        // 显示最终转录文本
+    if (data.text) {
+        // 显示文本消息
         appendMessage('助手', data.text);
-    } else if (data.audio_url) {
-        appendAudioMessage('助手', data.audio_url);
+        
+        // 如果有音频 URL,播放语音
+        if (data.audio_url) {
+            appendAudioMessage('助手', data.audio_url);
+        }
     }
 };
 
@@ -63,7 +63,7 @@ function startRecording() {
 
             mediaRecorder = new MediaRecorder(stream);
 
-            // 设置 timeslice 控制音频数据可用的频率（例如每250毫秒）
+            // 设置 timeslice 控制音频数据可��的频率（例如每250毫秒）
             const timeslice = 250; // 时间，单位为毫秒
 
             mediaRecorder.start(timeslice);
@@ -147,8 +147,11 @@ uploadAudioInput.addEventListener('change', () => {
 });
 
 function sendTextMessage(text) {
-    // 通过 WebSocket 发送文字消息
-    ws.send(JSON.stringify({ text: text }));
+    // 通过 WebSocket 发送文字消息,并指明需要 TTS
+    ws.send(JSON.stringify({ 
+        text: text,
+        require_tts: true  // 添加标志表明需要 TTS
+    }));
 }
 
 function sendAudioMessage(audioBlob) {

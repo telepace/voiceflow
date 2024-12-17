@@ -5,12 +5,13 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/telepace/voiceflow/pkg/config"
 	"github.com/telepace/voiceflow/pkg/logger"
-	"net/http"
-	"time"
 )
 
 type STT struct {
@@ -31,17 +32,19 @@ func NewVolcengineSTT() *STT {
 	if err != nil {
 		logger.Fatalf("配置初始化失败: %v", err)
 	}
+
+	sttCfg := cfg.Volcengine.STT
 	return &STT{
-		wsURL:      cfg.Volcengine.WsURL,
-		uid:        cfg.Volcengine.UID,
-		rate:       cfg.Volcengine.Rate,
-		format:     cfg.Volcengine.Format,
-		bits:       cfg.Volcengine.Bits,
-		channel:    cfg.Volcengine.Channel,
-		codec:      cfg.Volcengine.Codec,
-		accessKey:  cfg.Volcengine.AccessKey,
-		appKey:     cfg.Volcengine.AppKey,
-		resourceID: cfg.Volcengine.ResourceID,
+		wsURL:      sttCfg.WsURL,
+		uid:        sttCfg.UID,
+		rate:       sttCfg.Rate,
+		format:     sttCfg.Format,
+		bits:       sttCfg.Bits,
+		channel:    sttCfg.Channel,
+		codec:      sttCfg.Codec,
+		accessKey:  sttCfg.AccessKey,
+		appKey:     sttCfg.AppKey,
+		resourceID: sttCfg.ResourceID,
 	}
 }
 

@@ -36,6 +36,12 @@ func InitServices() {
 	storageService = storage.NewService()
 }
 
+// 修改消息结构
+type TextMessage struct {
+	Text       string `json:"text"`
+	RequireTTS bool   `json:"require_tts"`
+}
+
 func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 
 	// 升级 WebSocket 连接
@@ -63,30 +69,32 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 
 		if mt == websocket.TextMessage {
 			logger.Debug("Received text message")
-			// 处理文字消息
-			var msg map[string]string
+			var msg TextMessage
 			if err := json.Unmarshal(data, &msg); err != nil {
 				logger.Error("JSON parse error: %v", err)
 				continue
 			}
-			text := msg["text"]
-
-			// 调用 TTS 服务，将文字转换为语音
-			audioData, err := currentTTSService.Synthesize(text)
+			
+			// 调用 TTS 服务
+			audioData, err := currentTTSService.Synthesize(msg.Text)
 			if err != nil {
 				logger.Error("TTS error: %v", err)
 				continue
 			}
-
+			
 			// 存储音频并获取 URL
 			audioURL, err := currentStorageService.StoreAudio(audioData)
 			if err != nil {
 				logger.Error("Storage error: %v", err)
 				continue
 			}
-
-			// 返回音频 URL 给前端
-			ws.WriteJSON(map[string]string{"audio_url": audioURL})
+			
+			// 返回文本和音频 URL
+			response := map[string]string{
+				"text": msg.Text,
+				"audio_url": audioURL,
+			}
+			ws.WriteJSON(response)
 		} else if mt == websocket.BinaryMessage {
 			logger.Debug("Received binary message")
 			// 处理音频消息
