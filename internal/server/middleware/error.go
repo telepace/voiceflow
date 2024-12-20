@@ -19,5 +19,6 @@ func ErrorHandler(handler func(*websocket.Conn, interface{}) error) func(*websoc
 			return conn.WriteJSON(response)
 		}
 		return nil
+		
 	}
 }

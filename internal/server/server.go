@@ -2,8 +2,9 @@
 package server
 
 import (
-	"github.com/telepace/voiceflow/pkg/logger"
 	"net/http"
+
+	"github.com/telepace/voiceflow/pkg/logger"
 
 	"github.com/gorilla/websocket"
 )
@@ -40,4 +41,3 @@ func (s *Server) SetupRoutes(mux *http.ServeMux) {
 		s.HandleConfig(w, r)
 	})
 }
-

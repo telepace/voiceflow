@@ -10,8 +10,6 @@ import (
 	"github.com/telepace/voiceflow/pkg/logger"
 
 	"github.com/gorilla/websocket"
-	"github.com/telepace/voiceflow/internal/llm"
-	"github.com/telepace/voiceflow/internal/server/message"
 	"github.com/telepace/voiceflow/internal/storage"
 	"github.com/telepace/voiceflow/internal/stt"
 	"github.com/telepace/voiceflow/internal/tts"
@@ -19,10 +17,10 @@ import (
 
 var (
 	// 服务实例和锁
-	serviceLock    sync.RWMutex
-	sttService     stt.Service
-	ttsService     tts.Service
-	llmService     llm.Service
+	serviceLock sync.RWMutex
+	sttService  stt.Service
+	ttsService  tts.Service
+	// llmService     llm.Service
 	storageService storage.Service
 )
 
@@ -34,7 +32,7 @@ func InitServices() {
 	}
 	sttService = stt.NewService(cfg.STT.Provider)
 	ttsService = tts.NewService(cfg.TTS.Provider)
-	llmService = llm.NewService(cfg.LLM.Provider)
+	// llmService = llm.NewService(cfg.LLM.Provider)
 	storageService = storage.NewService()
 }
 
@@ -52,9 +50,8 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	defer ws.Close()
 
-	// 初始化消息处理器 - 移除 llmService
-	textHandler := message.NewTextMessageHandler(ttsService, storageService)
-	binaryHandler := message.NewBinaryMessageHandler(sttService, ttsService, storageService)
+	// 创建会话管理器
+	sessionManager := NewSessionManager()
 
 	for {
 		mt, data, err := ws.ReadMessage()
@@ -69,29 +66,66 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 
 		switch mt {
 		case websocket.TextMessage:
-			var msg message.TextMessage
+			var msg map[string]interface{}
 			if err := json.Unmarshal(data, &msg); err != nil {
-				logger.Error("Failed to parse text message", "error", err)
-				ws.WriteJSON(map[string]string{"error": "Invalid message format"})
+				logger.Error("解析消息失败", "error", err)
 				continue
 			}
 
-			if err := textHandler.Handle(ws, &msg); err != nil {
-				logger.Error("Failed to handle text message", "error", err)
-				ws.WriteJSON(map[string]string{
-					"error":   "Failed to process message",
-					"details": err.Error(),
-				})
+			// 检查是否是音频相关的控制消息
+			if msgType, ok := msg["type"].(string); ok {
+				switch msgType {
+				case "audio_start":
+					sessionID, _ := msg["session_id"].(string)
+					sessionManager.StartSession(sessionID)
+				case "audio_end":
+					sessionID, _ := msg["session_id"].(string)
+					if err := sessionManager.EndSession(sessionID, ws); err != nil {
+						logger.Error("处理会话结束失败", "error", err)
+					}
+				}
+			} else {
+				// 处理普通文本消息
+				text, _ := msg["text"].(string)
+				requireTTS, _ := msg["require_tts"].(bool)
+				
+				if requireTTS {
+					// 调用 TTS 服务
+					audio, err := ttsService.Synthesize(text)
+					if err != nil {
+						logger.Error("语音合成失败", "error", err)
+						continue
+					}
+					
+					// 存储音频文件
+					audioURL, err := storageService.StoreAudio(audio)
+					if err != nil {
+						logger.Error("存储音频失败", "error", err)
+						continue
+					}
+					
+					// 发送响应给客户端
+					response := map[string]interface{}{
+						"type": "tts_complete",
+						"text": text,
+						"audio_url": audioURL,
+					}
+					
+					if err := ws.WriteJSON(response); err != nil {
+						logger.Error("发送响应失败", "error", err)
+					}
+				}
 			}
 
 		case websocket.BinaryMessage:
-			msg := &message.BinaryMessage{Data: data}
-			if err := binaryHandler.Handle(ws, msg); err != nil {
-				logger.Error("Failed to handle binary message", "error", err)
-				ws.WriteJSON(map[string]string{
-					"error":   "Failed to process audio",
-					"details": err.Error(),
-				})
+			currentSession := sessionManager.GetCurrentSession()
+			if currentSession == "" {
+				logger.Error("收到二进制数据但没有活动会话")
+				continue
+			}
+
+			if err := sessionManager.AppendAudioData(currentSession, data); err != nil {
+				logger.Error("追加音频数据失败", "error", err)
 			}
 		}
 	}
