@@ -42,31 +42,61 @@ func (s *STT) Recognize(audioData []byte, audioURL string) (string, error) {
 func (s *STT) transcribeFromURL(audioURL string) (string, error) {
 	ctx := context.Background()
 
+	// 首次尝试：启用语言检测
 	params := &aai.TranscriptOptionalParams{
-		LanguageCode: "zh",
+		LanguageDetection:           aai.Bool(true),
+		LanguageConfidenceThreshold: aai.Float64(0.8),
+		FormatText:                  aai.Bool(true),
+		Punctuate:                   aai.Bool(true),
 	}
 
 	transcript, err := s.client.Transcripts.TranscribeFromURL(ctx, audioURL, params)
 	if err != nil {
-		return "", fmt.Errorf("转录失败: %v", err)
+		// 检查是否是语言置信度错误
+		if transcript.Status == "error" && transcript.Error != nil &&
+			*transcript.Error == "detected language 'en', confidence 0.6602, is below the requested confidence threshold value of '0.8'" {
+
+			// 第二次尝试：使用英语作为默认语言
+			params.LanguageDetection = aai.Bool(false)
+			params.LanguageCode = aai.TranscriptLanguageCode("en")
+
+			transcript, err = s.client.Transcripts.TranscribeFromURL(ctx, audioURL, params)
+			if err != nil {
+				return "", fmt.Errorf("使用默认语言重新转录失败: %v", err)
+			}
+		} else {
+			return "", fmt.Errorf("转录失败: %v", err)
+		}
 	}
 
-	// 轮询检查转录状态
+	// 使用指数退避策略
+	backoff := 100 * time.Millisecond
+	maxBackoff := 2 * time.Second
+
 	for transcript.Status != "completed" {
-		time.Sleep(1 * time.Second)
+		select {
+		case <-ctx.Done():
+			return "", fmt.Errorf("转录超时")
+		default:
+			time.Sleep(backoff)
 
-		// 使用 transcript.ID 获取最新状态
-		transcript, err = s.client.Transcripts.Get(ctx, *transcript.ID)
-		if err != nil {
-			return "", fmt.Errorf("获取转录结果失败: %v", err)
-		}
+			transcript, err = s.client.Transcripts.Get(ctx, *transcript.ID)
+			if err != nil {
+				return "", fmt.Errorf("获取转录结果失败: %v", err)
+			}
 
-		if transcript.Status == "error" {
-			return "", fmt.Errorf("转录出错: %s", *transcript.Error)
+			if transcript.Status == "error" {
+				return "", fmt.Errorf("转录出错: %s", *transcript.Error)
+			}
+
+			// 增加等待时间，但不超过最大值
+			backoff = time.Duration(float64(backoff) * 1.5)
+			if backoff > maxBackoff {
+				backoff = maxBackoff
+			}
 		}
 	}
 
-	// 确保 Text 字段不为 nil
 	if transcript.Text == nil {
 		return "", fmt.Errorf("转录结果为空")
 	}

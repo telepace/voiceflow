@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
-	"github.com/telepace/voiceflow/pkg/config"
 )
 
 type SessionManager struct {
@@ -51,56 +50,59 @@ func (sm *SessionManager) AppendAudioData(sessionID string, data []byte) error {
 func (sm *SessionManager) EndSession(sessionID string, ws *websocket.Conn) error {
 	sm.mu.Lock()
 	buffer, exists := sm.sessions[sessionID]
+	audioData := buffer.Bytes()
 	sm.mu.Unlock()
 
 	if !exists {
 		return fmt.Errorf("session not found: %s", sessionID)
 	}
 
-	audioData := buffer.Bytes()
-	var audioURL string
+	go func() {
+		audioURLChan := make(chan string, 1)
+		errChan := make(chan error, 1)
 
-	// 判断当前 Provider 是否为 AssemblyAI
-	cfg, err := config.GetConfig()
-	if err != nil {
-		return fmt.Errorf("配置获取失败: %v", err)
-	}
+		go func() {
+			audioURL, err := storageService.StoreAudio(audioData)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			audioURLChan <- audioURL
+		}()
 
-	if cfg.STT.Provider == "assemblyai" {
-		// 上传音频到 MinIO
-		audioURL, err = storageService.StoreAudio(audioData)
-		if err != nil {
-			return fmt.Errorf("failed to store audio: %w", err)
+		go func() {
+			text, err := sttService.Recognize(audioData, "")
+			if err != nil {
+				ws.WriteJSON(map[string]interface{}{
+					"type":       "recognition_error",
+					"session_id": sessionID,
+					"error":      err.Error(),
+				})
+				return
+			}
+
+			ws.WriteJSON(map[string]interface{}{
+				"type":       "recognition_complete",
+				"session_id": sessionID,
+				"text":       text,
+			})
+		}()
+
+		select {
+		case audioURL := <-audioURLChan:
+			ws.WriteJSON(map[string]interface{}{
+				"type":       "audio_stored",
+				"session_id": sessionID,
+				"audio_url":  audioURL,
+			})
+		case err := <-errChan:
+			ws.WriteJSON(map[string]interface{}{
+				"type":  "storage_error",
+				"error": err.Error(),
+			})
 		}
+	}()
 
-		// 发送音频 URL 给前端
-		ws.WriteJSON(map[string]interface{}{
-			"type":       "audio_stored",
-			"session_id": sessionID,
-			"audio_url":  audioURL,
-		})
-	}
-
-	// 调用 STT 服务
-	text, err := sttService.Recognize(audioData, audioURL)
-	if err != nil {
-		// 发送错误响应
-		ws.WriteJSON(map[string]interface{}{
-			"type":       "recognition_error",
-			"session_id": sessionID,
-			"error":      err.Error(),
-		})
-		return err
-	}
-
-	// 发送识别结果
-	ws.WriteJSON(map[string]interface{}{
-		"type":       "recognition_complete",
-		"session_id": sessionID,
-		"text":       text,
-	})
-
-	// 清理会话
 	sm.mu.Lock()
 	delete(sm.sessions, sessionID)
 	if sm.currentSession == sessionID {
