@@ -34,9 +34,9 @@ test/
 # Configuration and environment files
 .env
 *.env
-*.yaml
-*.yml
-!configs/config.yaml
+# *.yaml
+# *.yml
+# !configs/config.yaml
 
 # Tools and dependencies
 vendor/
