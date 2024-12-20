@@ -40,3 +40,4 @@ func (s *Server) SetupRoutes(mux *http.ServeMux) {
 		s.HandleConfig(w, r)
 	})
 }
+

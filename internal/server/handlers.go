@@ -3,13 +3,15 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/telepace/voiceflow/pkg/config"
-	"github.com/telepace/voiceflow/pkg/logger"
 	"net/http"
 	"sync"
 
+	"github.com/telepace/voiceflow/pkg/config"
+	"github.com/telepace/voiceflow/pkg/logger"
+
 	"github.com/gorilla/websocket"
 	"github.com/telepace/voiceflow/internal/llm"
+	"github.com/telepace/voiceflow/internal/server/message"
 	"github.com/telepace/voiceflow/internal/storage"
 	"github.com/telepace/voiceflow/internal/stt"
 	"github.com/telepace/voiceflow/internal/tts"
@@ -43,77 +45,54 @@ type TextMessage struct {
 }
 
 func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
-
-	// 升级 WebSocket 连接
 	ws, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		logger.Errorf("WebSocket Upgrade error: %v", err)
+		logger.Error("WebSocket upgrade error: %v", err)
 		return
 	}
 	defer ws.Close()
 
+	// 初始化消息处理器 - 移除 llmService
+	textHandler := message.NewTextMessageHandler(ttsService, storageService)
+	binaryHandler := message.NewBinaryMessageHandler(sttService, ttsService, storageService)
+
 	for {
 		mt, data, err := ws.ReadMessage()
 		if err != nil {
-			logger.Errorf("Read error: %v", err)
+			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
+				logger.Info("WebSocket connection closed normally")
+			} else {
+				logger.Error("WebSocket read error", "error", err)
+			}
 			break
 		}
 
-		// 获取最新的服务实例
-		serviceLock.RLock()
-		currentSTTService := sttService
-		currentTTSService := ttsService
-		currentLLMService := llmService
-		currentStorageService := storageService
-		serviceLock.RUnlock()
-
-		if mt == websocket.TextMessage {
-			logger.Debug("Received text message")
-			var msg TextMessage
+		switch mt {
+		case websocket.TextMessage:
+			var msg message.TextMessage
 			if err := json.Unmarshal(data, &msg); err != nil {
-				logger.Error("JSON parse error: %v", err)
-				continue
-			}
-			
-			// 调用 TTS 服务
-			audioData, err := currentTTSService.Synthesize(msg.Text)
-			if err != nil {
-				logger.Error("TTS error: %v", err)
-				continue
-			}
-			
-			// 存储音频并获取 URL
-			audioURL, err := currentStorageService.StoreAudio(audioData)
-			if err != nil {
-				logger.Error("Storage error: %v", err)
-				continue
-			}
-			
-			// 返回文本和音频 URL
-			response := map[string]string{
-				"text": msg.Text,
-				"audio_url": audioURL,
-			}
-			ws.WriteJSON(response)
-		} else if mt == websocket.BinaryMessage {
-			logger.Debug("Received binary message")
-			// 处理音频消息
-			// 使用 STT 服务将语音转换为文字
-			text, err := currentSTTService.Recognize(data)
-			if err != nil {
-				logger.Errorf("STT error: %v", err)
+				logger.Error("Failed to parse text message", "error", err)
+				ws.WriteJSON(map[string]string{"error": "Invalid message format"})
 				continue
 			}
 
-			// 调用 LLM 服务获取响应
-			responseText, err := currentLLMService.GetResponse(text)
-			if err != nil {
-				logger.Errorf("LLM error: %v", err)
-				continue
+			if err := textHandler.Handle(ws, &msg); err != nil {
+				logger.Error("Failed to handle text message", "error", err)
+				ws.WriteJSON(map[string]string{
+					"error":   "Failed to process message",
+					"details": err.Error(),
+				})
 			}
 
-			// 返回文本响应给前端
-			ws.WriteJSON(map[string]string{"text": responseText})
+		case websocket.BinaryMessage:
+			msg := &message.BinaryMessage{Data: data}
+			if err := binaryHandler.Handle(ws, msg); err != nil {
+				logger.Error("Failed to handle binary message", "error", err)
+				ws.WriteJSON(map[string]string{
+					"error":   "Failed to process audio",
+					"details": err.Error(),
+				})
+			}
 		}
 	}
 }

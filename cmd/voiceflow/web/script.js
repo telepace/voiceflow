@@ -9,12 +9,26 @@ ws.onopen = () => {
 };
 
 ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
+    let data;
+    try {
+        data = JSON.parse(event.data);
+    } catch (e) {
+        console.error('Failed to parse WebSocket message:', e);
+        appendSystemMessage('错误：服务器返回了无效的响应');
+        return;
+    }
+
+    if (data.error) {
+        console.error('Server error:', data);
+        appendSystemMessage(`错误：${data.error}`);
+        if (data.details) {
+            console.error('Error details:', data.details);
+        }
+        return;
+    }
+
     if (data.text) {
-        // 显示文本消息
         appendMessage('助手', data.text);
-        
-        // 如果有音频 URL,播放语音
         if (data.audio_url) {
             appendAudioMessage('助手', data.audio_url);
         }
@@ -23,6 +37,28 @@ ws.onmessage = (event) => {
 
 ws.onerror = (error) => {
     console.error('WebSocket 错误:', error);
+};
+
+// 添加重连逻辑
+let reconnectAttempts = 0;
+const maxReconnectAttempts = 5;
+
+ws.onclose = (event) => {
+    console.log('WebSocket connection closed:', event);
+    
+    if (reconnectAttempts < maxReconnectAttempts) {
+        reconnectAttempts++;
+        const timeout = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+        
+        appendSystemMessage(`连接已断开，${timeout/1000}秒后尝试重新连接...`);
+        
+        setTimeout(() => {
+            ws = new WebSocket(WEBSOCKET_URL);
+            // 重新绑定事件处理器
+        }, timeout);
+    } else {
+        appendSystemMessage('连接已断开，请刷新页面重试');
+    }
 };
 
 const chatWindow = document.getElementById('chat-window');
@@ -63,7 +99,7 @@ function startRecording() {
 
             mediaRecorder = new MediaRecorder(stream);
 
-            // 设置 timeslice 控制音频数据可��的频率（例如每250毫秒）
+            // 设置 timeslice 控制音频数据可的频率（例如每250毫秒）
             const timeslice = 250; // 时间，单位为毫秒
 
             mediaRecorder.start(timeslice);
