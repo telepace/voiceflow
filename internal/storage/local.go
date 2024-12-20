@@ -1,3 +1,4 @@
+// local.go
 package storage
 
 import (
@@ -6,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"github.com/telepace/voiceflow/pkg/config"
+	"github.com/telepace/voiceflow/pkg/logger"
 )
 
 type LocalStorageService struct {
@@ -14,8 +17,12 @@ type LocalStorageService struct {
 
 // NewLocalStorageService 创建并返回一个新的本地存储服务
 func NewLocalStorageService() *LocalStorageService {
+	cfg, err := config.GetConfig()
+	if err != nil {
+		logger.Fatalf("配置初始化失败: %v", err)
+	}
 	return &LocalStorageService{
-		storagePath: "./audio_files", // 设置本地存储路径
+		storagePath: cfg.MinIO.StoragePath, // 使用相同的配置路径或单独配置
 	}
 }
 

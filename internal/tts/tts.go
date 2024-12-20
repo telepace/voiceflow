@@ -1,9 +1,12 @@
+// internal/tts/tts.go
+
 package tts
 
 import (
 	"github.com/telepace/voiceflow/internal/tts/azure"
 	"github.com/telepace/voiceflow/internal/tts/google"
 	"github.com/telepace/voiceflow/internal/tts/local"
+	"github.com/telepace/voiceflow/internal/tts/volcengine"
 	"github.com/telepace/voiceflow/pkg/logger"
 )
 
@@ -20,6 +23,8 @@ func NewService(provider string) Service {
 		return azure.NewAzureTTS() // 调用 Azure TTS 实现
 	case "google":
 		return google.NewGoogleTTS() // 调用 Google TTS 实现
+	case "volcengine":
+		return volcengine.NewVolcengineTTS()
 	case "local":
 		return local.NewLocalTTS() // 调用本地 TTS 实现
 	default:

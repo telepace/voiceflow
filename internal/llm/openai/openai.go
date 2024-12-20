@@ -3,12 +3,13 @@ package openai
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/telepace/voiceflow/pkg/config"
-	"github.com/telepace/voiceflow/pkg/logger"
 	"io/ioutil"
 	"net/http"
+	"time"
+
+	"github.com/telepace/voiceflow/pkg/config"
+	"github.com/telepace/voiceflow/pkg/logger"
 )
 
 // OpenAILLM 结构体存储 OpenAI 交互所需的信息
@@ -31,54 +32,63 @@ func NewOpenAILLM() *OpenAILLM {
 
 // GetResponse 调用 OpenAI API，获取对话模型的回复
 func (o *OpenAILLM) GetResponse(prompt string) (string, error) {
-	// 定义请求体结构
-	requestBody, err := json.Marshal(map[string]interface{}{
-		"model":      "text-davinci-003", // 或者其他模型
-		"prompt":     prompt,
-		"max_tokens": 150,
-	})
-	if err != nil {
-		return "", err
+	if o.apiKey == "" {
+		return "", fmt.Errorf("OpenAI API key not configured")
 	}
 
-	// 创建请求
-	req, err := http.NewRequest("POST", o.endpoint, bytes.NewBuffer(requestBody))
-	if err != nil {
-		return "", err
+	url := o.endpoint
+
+	requestBody := map[string]interface{}{
+		"model": "gpt-3.5-turbo",
+		"messages": []map[string]string{
+			{
+				"role":    "user",
+				"content": prompt,
+			},
+		},
+		"temperature": 0.7,
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", o.apiKey))
+
+	jsonData, err := json.Marshal(requestBody)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+o.apiKey)
 
-	// 发送请求
-	client := &http.Client{}
+	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to send request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// 处理响应
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New("failed to get response from OpenAI")
+		body, _ := ioutil.ReadAll(resp.Body)
+		return "", fmt.Errorf("OpenAI API error (status %d): %s", resp.StatusCode, string(body))
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
+	var result struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
 	}
 
-	// 解析响应
-	var result map[string]interface{}
-	if err := json.Unmarshal(body, &result); err != nil {
-		return "", err
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	// 返回模型生成的文本
-	if choices, ok := result["choices"].([]interface{}); ok && len(choices) > 0 {
-		if choice, ok := choices[0].(map[string]interface{}); ok {
-			return choice["text"].(string), nil
-		}
+	if len(result.Choices) == 0 {
+		return "", fmt.Errorf("no response from OpenAI")
 	}
 
-	return "", errors.New("invalid response format from OpenAI")
+	return result.Choices[0].Message.Content, nil
 }

@@ -3,20 +3,28 @@ package config
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"sync"
+
+	"github.com/spf13/viper"
 )
 
 type VolcengineConfig struct {
-	AccessKey string `mapstructure:"access_key"`
-	AppKey    string `mapstructure:"app_key"`
-	WsURL     string `mapstructure:"ws_url"`
-	UID       string `yaml:"uid"`
-	Rate      int    `yaml:"rate"`
-	Format    string `yaml:"format"`
-	Bits      int    `yaml:"bits"`
-	Channel   int    `yaml:"channel"`
-	Codec     string `yaml:"codec"`
+	AccessKey  string `mapstructure:"access_key"`
+	AppKey     string `mapstructure:"app_key"`
+	WsURL      string `mapstructure:"ws_url"`
+	ResourceID string `mapstructure:"resource_id"`
+	UID        string `yaml:"uid"`
+	Rate       int    `yaml:"rate"`
+	Format     string `yaml:"format"`
+	Bits       int    `yaml:"bits"`
+	Channel    int    `yaml:"channel"`
+	Codec      string `yaml:"codec"`
+}
+
+type AWSConfig struct {
+	AccessKeyID     string `mapstructure:"access_key_id"`
+	SecretAccessKey string `mapstructure:"secret_access_key"`
+	Region          string `yaml:"region"`
 }
 
 type Config struct {
@@ -52,8 +60,34 @@ type Config struct {
 		STTKey string `mapstructure:"stt_key"`
 		Region string
 	}
-	Volcengine VolcengineConfig `yaml:"volcengine"`
-	MinIO      struct {
+	AWS        AWSConfig `yaml:"aws"`
+	Volcengine struct {
+		STT struct {
+			WsURL      string `mapstructure:"ws_url"`
+			UID        string `mapstructure:"uid"`
+			Rate       int    `mapstructure:"rate"`
+			Format     string `mapstructure:"format"`
+			Bits       int    `mapstructure:"bits"`
+			Channel    int    `mapstructure:"channel"`
+			Codec      string `mapstructure:"codec"`
+			AccessKey  string `mapstructure:"access_key"`
+			AppKey     string `mapstructure:"app_key"`
+			ResourceID string `mapstructure:"resource_id"`
+		} `mapstructure:"stt"`
+
+		TTS struct {
+			WsURL       string  `mapstructure:"ws_url"`
+			AppID       string  `mapstructure:"app_id"`
+			Token       string  `mapstructure:"token"`
+			Cluster     string  `mapstructure:"cluster"`
+			VoiceType   string  `mapstructure:"voice_type"`
+			Encoding    string  `mapstructure:"encoding"`
+			SpeedRatio  float64 `mapstructure:"speed_ratio"`
+			VolumeRatio float64 `mapstructure:"volume_ratio"`
+			PitchRatio  float64 `mapstructure:"pitch_ratio"`
+		} `mapstructure:"tts"`
+	} `mapstructure:"volcengine"`
+	MinIO struct {
 		Enabled    bool   `mapstructure:"enabled"`
 		BucketName string `mapstructure:"bucket_name"`
 		Endpoint   string `mapstructure:"endpoint"`
@@ -61,6 +95,7 @@ type Config struct {
 		SecretKey  string `mapstructure:"secret_key"`
 		UseSSL     bool   `mapstructure:"use_ssl"`
 		Secure     bool   `mapstructure:"secure"`
+		StoragePath string `mapstructure:"storage_path"`
 	}
 	Logging struct {
 		Level        string

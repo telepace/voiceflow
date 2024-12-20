@@ -5,12 +5,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/go-audio/audio"
-	"github.com/go-audio/wav"
-	"github.com/telepace/voiceflow/pkg/config"
-	"github.com/telepace/voiceflow/pkg/logger"
 	"io"
 	"net/http"
+	"time"
+
+	"github.com/telepace/voiceflow/pkg/config"
+	"github.com/telepace/voiceflow/pkg/logger"
 )
 
 const WAVE_FORMAT_PCM = 1
@@ -46,29 +46,41 @@ func (a *AssemblyAI) Recognize(audioData []byte) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to transcribe audio: %v", err)
 	}
+
+	// 打印转录文本
+	logger.Infof("Transcription result: %s", transcriptText)
+
 	return transcriptText, nil
 }
 
 func (a *AssemblyAI) uploadAudioData(audioData []byte) (string, error) {
-	uploadURL := "https://api.assemblyai.com/v2/upload"
+	url := "https://api.assemblyai.com/v2/upload"
 
-	req, err := http.NewRequest("POST", uploadURL, bytes.NewReader(audioData))
+	req, err := http.NewRequest("POST", url, bytes.NewReader(audioData))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to create request: %v", err)
 	}
 
 	req.Header.Set("Authorization", a.apiKey)
-	req.Header.Set("Content-Type", "application/octet-stream")
+	req.Header.Set("Content-Type", "audio/wav")
+	req.Header.Set("Transfer-Encoding", "chunked")
 
-	client := &http.Client{}
+	logger.Infof("Uploading audio data, size: %d bytes", len(audioData))
+
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to upload: %v", err)
 	}
 	defer resp.Body.Close()
 
+	body, _ := io.ReadAll(resp.Body)
+	logger.Infof("Upload response status: %d, body: %s", resp.StatusCode, string(body))
+
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
 		return "", fmt.Errorf("upload failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
@@ -76,8 +88,8 @@ func (a *AssemblyAI) uploadAudioData(audioData []byte) (string, error) {
 		UploadURL string `json:"upload_url"`
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", err
+	if err := json.Unmarshal(body, &result); err != nil {
+		return "", fmt.Errorf("failed to decode response: %v", err)
 	}
 
 	return result.UploadURL, nil
@@ -86,12 +98,13 @@ func (a *AssemblyAI) uploadAudioData(audioData []byte) (string, error) {
 func (a *AssemblyAI) requestTranscription(uploadURL string) (string, error) {
 	transcriptURL := "https://api.assemblyai.com/v2/transcript"
 
+	logger.Infof("Sending transcription request for audio URL: %s", uploadURL)
+
 	requestBody := map[string]interface{}{
-		"audio_url":           uploadURL,
-		"language_code":       "en_us",
-		"punctuate":           true,
-		"format_text":         true,
-		"wait_for_completion": true,
+		"audio_url": uploadURL,
+		// "language_code": "zh",
+		"punctuate":   true,
+		"format_text": true,
 	}
 
 	requestBodyBytes, err := json.Marshal(requestBody)
@@ -122,54 +135,96 @@ func (a *AssemblyAI) requestTranscription(uploadURL string) (string, error) {
 	var result struct {
 		ID     string `json:"id"`
 		Status string `json:"status"`
-		Text   string `json:"text"`
-		Error  string `json:"error"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return "", err
 	}
 
-	if result.Status != "completed" {
-		return "", fmt.Errorf("transcription failed with status %s: %s", result.Status, result.Error)
+	// 轮询等待转录完成
+	pollURL := fmt.Sprintf("%s/%s", transcriptURL, result.ID)
+	for i := 0; i < 30; i++ { // 最多等待30次，每次3秒
+		time.Sleep(3 * time.Second)
+
+		req, err := http.NewRequest("GET", pollURL, nil)
+		if err != nil {
+			return "", err
+		}
+		req.Header.Set("Authorization", a.apiKey)
+
+		resp, err := client.Do(req)
+		if err != nil {
+			return "", err
+		}
+
+		var pollResult struct {
+			Status string `json:"status"`
+			Text   string `json:"text"`
+			Error  string `json:"error"`
+		}
+
+		if err := json.NewDecoder(resp.Body).Decode(&pollResult); err != nil {
+			resp.Body.Close()
+			return "", err
+		}
+		resp.Body.Close()
+
+		logger.Infof("Transcription status: %s", pollResult.Status)
+
+		switch pollResult.Status {
+		case "completed":
+			// 打印最终转录文本
+			logger.Infof("Final transcription text: %s", pollResult.Text)
+			return pollResult.Text, nil
+		case "error":
+			return "", fmt.Errorf("transcription failed: %s", pollResult.Error)
+		case "processing", "queued":
+			continue
+		default:
+			return "", fmt.Errorf("unknown status: %s", pollResult.Status)
+		}
 	}
 
-	return result.Text, nil
+	return "", fmt.Errorf("transcription timeout after 90 seconds")
 }
 
 func wrapPCMDataToWAV(pcmData []byte) ([]byte, error) {
+	outBuffer := bytes.NewBuffer(nil)
+
 	const (
-		sampleRate  = 16000
-		bitDepth    = 16
-		numChannels = 1
+		sampleRate    = 16000
+		numChannels   = 1
+		bitsPerSample = 16
 	)
 
-	buf := &BufferWriteSeeker{}
+	outBuffer.WriteString("RIFF")
+	writeInt32(outBuffer, uint32(len(pcmData)+36))
+	outBuffer.WriteString("WAVE")
 
-	encoder := wav.NewEncoder(buf, sampleRate, bitDepth, numChannels, WAVE_FORMAT_PCM)
+	outBuffer.WriteString("fmt ")
+	writeInt32(outBuffer, 16)
+	writeInt16(outBuffer, 1)
+	writeInt16(outBuffer, numChannels)
+	writeInt32(outBuffer, sampleRate)
+	writeInt32(outBuffer, sampleRate*numChannels*bitsPerSample/8)
+	writeInt16(outBuffer, numChannels*bitsPerSample/8)
+	writeInt16(outBuffer, bitsPerSample)
 
-	// 将 PCM 数据转换为 audio.IntBuffer
-	intBuf := &audio.IntBuffer{
-		Data:           make([]int, len(pcmData)/2),
-		Format:         &audio.Format{SampleRate: sampleRate, NumChannels: numChannels},
-		SourceBitDepth: bitDepth,
-	}
+	outBuffer.WriteString("data")
+	writeInt32(outBuffer, uint32(len(pcmData)))
+	outBuffer.Write(pcmData)
 
-	// 假设 PCM 数据是 16 位有符号整数（小端序）
-	for i := 0; i+1 < len(pcmData); i += 2 {
-		sample := int16(pcmData[i]) | int16(pcmData[i+1])<<8
-		intBuf.Data[i/2] = int(sample)
-	}
+	return outBuffer.Bytes(), nil
+}
 
-	// 写入缓冲区
-	if err := encoder.Write(intBuf); err != nil {
-		return nil, err
-	}
+func writeInt16(w *bytes.Buffer, value uint16) {
+	w.WriteByte(byte(value))
+	w.WriteByte(byte(value >> 8))
+}
 
-	// 关闭编码器以刷新数据
-	if err := encoder.Close(); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
+func writeInt32(w *bytes.Buffer, value uint32) {
+	w.WriteByte(byte(value))
+	w.WriteByte(byte(value >> 8))
+	w.WriteByte(byte(value >> 16))
+	w.WriteByte(byte(value >> 24))
 }

@@ -1,17 +1,20 @@
-// root.go
+// cmd/voiceflow/root.go
 package main
 
 import (
 	"context"
 	"embed"
 	"fmt"
-	"github.com/joho/godotenv"
-	"github.com/telepace/voiceflow/pkg/config"
 	"io/fs"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/joho/godotenv"
+	"github.com/telepace/voiceflow/pkg/config"
+	"github.com/telepace/voiceflow/pkg/sttservice"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -64,9 +67,20 @@ var rootCmd = &cobra.Command{
 	RunE:  run,
 }
 
+// 添加新的子命令 transcribe
+var transcribeCmd = &cobra.Command{
+	Use:   "transcribe",
+	Short: "Transcribe an audio file using STT service",
+	Long:  `Transcribe an audio file by specifying its path and using the configured STT service.`,
+	RunE:  runTranscribe,
+}
+
 func run(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
+	if err := ensureDirectories(); err != nil {
+		logger.Fatalf("Failed to ensure directories: %v", err)
+	}
 	// Load configuration
 	cfg, err := config.GetConfig()
 	if err != nil {
@@ -102,7 +116,7 @@ func run(cmd *cobra.Command, args []string) error {
 	// Set up HTTP server
 	mux := http.NewServeMux()
 	if err := setupFileServers(mux); err != nil {
-		return fmt.Errorf("failed to setup file servers: %w", err)
+		logger.Fatalf("Failed to setup file servers: %v", err)
 	}
 
 	// Initialize WebSocket server
@@ -158,6 +172,8 @@ func Execute() {
 	}
 }
 
+var transcribeFile string
+
 func init() {
 	cobra.OnInitialize(initConfig)
 
@@ -180,6 +196,13 @@ func init() {
 
 	// 绑定到 viper
 	viper.BindPFlags(rootCmd.PersistentFlags())
+
+	// 配置 transcribe 子命令的标志
+	transcribeCmd.Flags().StringVarP(&transcribeFile, "file", "f", "", "Path to the audio file to transcribe")
+	transcribeCmd.MarkFlagRequired("file") // 标记为必需
+
+	// 将 transcribe 子命令添加到 rootCmd
+	rootCmd.AddCommand(transcribeCmd)
 }
 
 func initConfig() {
@@ -187,7 +210,8 @@ func initConfig() {
 	if err := godotenv.Load(); err != nil {
 		logger.Warn("No .env file found or failed to load, proceeding without it")
 	} else {
-		logger.Info(".env file loaded")
+		envPath, _ := os.Getwd()
+		logger.Info(fmt.Sprintf(".env file loaded from: %s/.env", envPath))
 	}
 
 	if cfgFile != "" {
@@ -228,8 +252,72 @@ func setDefaults() {
 	viper.SetDefault("logging.compress", true)
 	viper.SetDefault("logging.report_caller", true)
 
+	// AWS 默认配置
+	viper.SetDefault("aws.region", "us-east-2")
+
 	// 其他服务配置...
 	viper.SetDefault("web.port", 18090)
 	viper.SetDefault("minio.enabled", true)
 	viper.SetDefault("minio.endpoint", "localhost:9000")
+}
+
+// runTranscribe 处理 transcribe 子命令的逻辑
+func runTranscribe(cmd *cobra.Command, args []string) error {
+	ctx := context.Background()
+
+	// 初始化配置
+	if err := ensureDirectories(); err != nil {
+		logger.Fatalf("Failed to ensure directories: %v", err)
+	}
+
+	cfg, err := config.GetConfig()
+	if err != nil {
+		return fmt.Errorf("failed to get config: %w", err)
+	}
+
+	// 初始化日志
+	logCfg := logger.Config{
+		Level:        cfg.Logging.Level,
+		Format:       cfg.Logging.Format,
+		Filename:     cfg.Logging.Filename,
+		MaxSize:      cfg.Logging.MaxSize,
+		MaxBackups:   cfg.Logging.MaxBackups,
+		MaxAge:       cfg.Logging.MaxAge,
+		Compress:     cfg.Logging.Compress,
+		ReportCaller: cfg.Logging.ReportCaller,
+	}
+
+	fields := logger.StandardFields{
+		ServiceID:  "voiceflow",
+		InstanceID: fmt.Sprintf("instance-%d", time.Now().Unix()),
+	}
+
+	if err := logger.Init(logCfg, fields); err != nil {
+		return fmt.Errorf("failed to initialize logger: %w", err)
+	}
+
+	// 记录启动信息
+	logger.InfoContextf(ctx, "Starting VoiceFlow transcribe command with config: %+v", cfg)
+
+	// 初始化服务
+	serverpkg.InitServices()
+
+	// 读取音频文件
+	audioData, err := ioutil.ReadFile(transcribeFile)
+	if err != nil {
+		logger.Errorf("Failed to read audio file: %v", err)
+		return fmt.Errorf("failed to read audio file: %w", err)
+	}
+
+	// 调用 STT 服务进行转录
+	transcript, err := sttservice.Recognize(audioData)
+	if err != nil {
+		logger.Errorf("STT Recognize error: %v", err)
+		return fmt.Errorf("STT Recognize error: %w", err)
+	}
+
+	// 输出转录结果
+	fmt.Printf("Transcript:\n%s\n", transcript)
+
+	return nil
 }

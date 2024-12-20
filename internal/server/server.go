@@ -1,9 +1,10 @@
-// server.go
+// internal/server/server.go
 package server
 
 import (
-	"github.com/telepace/voiceflow/pkg/logger"
 	"net/http"
+
+	"github.com/telepace/voiceflow/pkg/logger"
 
 	"github.com/gorilla/websocket"
 )
