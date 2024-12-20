@@ -88,7 +88,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 				// 处理普通文本消息
 				text, _ := msg["text"].(string)
 				requireTTS, _ := msg["require_tts"].(bool)
-				
+
 				if requireTTS {
 					// 调用 TTS 服务
 					audio, err := ttsService.Synthesize(text)
@@ -96,21 +96,21 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 						logger.Error("语音合成失败", "error", err)
 						continue
 					}
-					
+
 					// 存储音频文件
 					audioURL, err := storageService.StoreAudio(audio)
 					if err != nil {
 						logger.Error("存储音频失败", "error", err)
 						continue
 					}
-					
+
 					// 发送响应给客户端
 					response := map[string]interface{}{
-						"type": "tts_complete",
-						"text": text,
+						"type":      "tts_complete",
+						"text":      text,
 						"audio_url": audioURL,
 					}
-					
+
 					if err := ws.WriteJSON(response); err != nil {
 						logger.Error("发送响应失败", "error", err)
 					}

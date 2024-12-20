@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/telepace/voiceflow/pkg/config"
 )
 
 type SessionManager struct {
@@ -49,53 +50,63 @@ func (sm *SessionManager) AppendAudioData(sessionID string, data []byte) error {
 
 func (sm *SessionManager) EndSession(sessionID string, ws *websocket.Conn) error {
 	sm.mu.Lock()
-	defer sm.mu.Unlock()
-
 	buffer, exists := sm.sessions[sessionID]
+	sm.mu.Unlock()
+
 	if !exists {
 		return fmt.Errorf("session not found: %s", sessionID)
 	}
 
-	// 获取音频数据
 	audioData := buffer.Bytes()
+	var audioURL string
 
-	// 1. 首先存储音频文件
-	audioURL, err := storageService.StoreAudio(audioData)
+	// 判断当前 Provider 是否为 AssemblyAI
+	cfg, err := config.GetConfig()
 	if err != nil {
-		return fmt.Errorf("failed to store audio: %w", err)
+		return fmt.Errorf("配置获取失败: %v", err)
 	}
 
-	// 2. 发送音频存储成功的消息
-	if err := ws.WriteJSON(map[string]interface{}{
-		"type":      "audio_stored",
-		"audio_url": audioURL,
-	}); err != nil {
-		return fmt.Errorf("failed to send audio storage response: %w", err)
-	}
+	if cfg.STT.Provider == "assemblyai" {
+		// 上传音频到 MinIO
+		audioURL, err = storageService.StoreAudio(audioData)
+		if err != nil {
+			return fmt.Errorf("failed to store audio: %w", err)
+		}
 
-	// 3. 进行语音识别
-	text, err := sttService.Recognize(audioData)
-	if err != nil {
-		// 发送识别错误消息
-		return ws.WriteJSON(map[string]interface{}{
-			"type":  "recognition_error",
-			"error": err.Error(),
+		// 发送音频 URL 给前端
+		ws.WriteJSON(map[string]interface{}{
+			"type":       "audio_stored",
+			"session_id": sessionID,
+			"audio_url":  audioURL,
 		})
 	}
 
-	// 4. 发送识别完成的消息
-	if err := ws.WriteJSON(map[string]interface{}{
-		"type": "recognition_complete",
-		"text": text,
-	}); err != nil {
-		return fmt.Errorf("failed to send recognition result: %w", err)
+	// 调用 STT 服务
+	text, err := sttService.Recognize(audioData, audioURL)
+	if err != nil {
+		// 发送错误响应
+		ws.WriteJSON(map[string]interface{}{
+			"type":       "recognition_error",
+			"session_id": sessionID,
+			"error":      err.Error(),
+		})
+		return err
 	}
 
-	// 5. 清理会话数据
+	// 发送识别结果
+	ws.WriteJSON(map[string]interface{}{
+		"type":       "recognition_complete",
+		"session_id": sessionID,
+		"text":       text,
+	})
+
+	// 清理会话
+	sm.mu.Lock()
 	delete(sm.sessions, sessionID)
 	if sm.currentSession == sessionID {
 		sm.currentSession = ""
 	}
+	sm.mu.Unlock()
 
 	return nil
 }

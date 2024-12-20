@@ -86,7 +86,7 @@ func (h *BinaryMessageHandler) HandleEnd(conn *websocket.Conn, sessionID string)
 
 	// 4. 异步进行语音识别
 	go func() {
-		text, err := h.stt.Recognize(audioData)
+		text, err := h.stt.Recognize(audioData, audioURL)
 		if err != nil {
 			// 发送错误响应
 			conn.WriteJSON(map[string]interface{}{

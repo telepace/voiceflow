@@ -2,15 +2,13 @@
 package storage
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/url"
-	"os"
 	"time"
 
-	"github.com/google/uuid" // 用于生成唯一文件名
+	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/telepace/voiceflow/pkg/config"
@@ -46,42 +44,25 @@ func NewMinIOService() *MinIOService {
 	}
 }
 
-// StoreAudio 实现了 Service 接口，用于存储音频数据
+// StoreAudio 实现了 Service 接口，用存储音频数据
 func (m *MinIOService) StoreAudio(audioData []byte) (string, error) {
 	ctx := context.Background()
 
-	// 创建临时文件存储音频数据
-	tempFile, err := ioutil.TempFile("", "audio-*.wav")
-	if err != nil {
-		return "", fmt.Errorf("error creating temp file: %v", err)
-	}
-	defer os.Remove(tempFile.Name()) // 确保临时文件被删除
-	defer tempFile.Close()
-
-	// 将音频数据写入临时文件
-	_, err = tempFile.Write(audioData)
-	if err != nil {
-		return "", fmt.Errorf("error writing audio to temp file: %v", err)
-	}
-
 	// 生成唯一文件名，并添加存储路径前缀
-	objectName := m.storagePath + uuid.New().String() + ".wav"
+	objectName := fmt.Sprintf("%s%s.wav", m.storagePath, uuid.New().String())
 
-	// 上传文件到 MinIO
-	info, err := m.client.FPutObject(ctx, m.bucketName, objectName, tempFile.Name(), minio.PutObjectOptions{
+	// 上传音频数据
+	_, err := m.client.PutObject(ctx, m.bucketName, objectName, bytes.NewReader(audioData), int64(len(audioData)), minio.PutObjectOptions{
 		ContentType: "audio/wav",
 	})
 	if err != nil {
-		return "", fmt.Errorf("error uploading file to MinIO: %v", err)
+		return "", fmt.Errorf("上传到 MinIO 失败: %v", err)
 	}
 
-	log.Printf("Successfully uploaded %s of size %d\n", objectName, info.Size)
-
 	// 生成预签名 URL
-	reqParams := url.Values{}
-	presignedURL, err := m.client.PresignedGetObject(ctx, m.bucketName, objectName, time.Duration(24)*time.Hour, reqParams)
+	presignedURL, err := m.client.PresignedGetObject(ctx, m.bucketName, objectName, time.Hour*24, nil)
 	if err != nil {
-		return "", fmt.Errorf("error generating presigned URL: %v", err)
+		return "", fmt.Errorf("生成预签名 URL 失败: %v", err)
 	}
 
 	return presignedURL.String(), nil

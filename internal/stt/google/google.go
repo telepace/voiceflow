@@ -5,10 +5,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/telepace/voiceflow/pkg/config"
-	"github.com/telepace/voiceflow/pkg/logger"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/telepace/voiceflow/pkg/config"
+	"github.com/telepace/voiceflow/pkg/logger"
 )
 
 type GoogleSTT struct {
@@ -27,7 +28,12 @@ func NewGoogleSTT() *GoogleSTT {
 }
 
 // Recognize 调用 Google STT API 将音频数据转换为文本
-func (g *GoogleSTT) Recognize(audioData []byte) (string, error) {
+func (g *GoogleSTT) Recognize(audioData []byte, audioURL string) (string, error) {
+	// 忽略 audioURL，仅使用 audioData 进行识别
+	return g.recognizeFromData(audioData)
+}
+
+func (g *GoogleSTT) recognizeFromData(audioData []byte) (string, error) {
 	requestBody, err := json.Marshal(map[string]interface{}{
 		"config": map[string]interface{}{
 			"encoding":        "LINEAR16",

@@ -1,230 +1,95 @@
-// assemblyai.go
 package assemblyai
 
 import (
 	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
-	"net/http"
 	"time"
 
+	aai "github.com/AssemblyAI/assemblyai-go-sdk"
 	"github.com/telepace/voiceflow/pkg/config"
 	"github.com/telepace/voiceflow/pkg/logger"
 )
 
-const WAVE_FORMAT_PCM = 1
-
-type AssemblyAI struct {
-	apiKey string
+type STT struct {
+	client *aai.Client
 }
 
-func NewAssemblyAI() *AssemblyAI {
-	logger.Info("Using AssemblyAI STT provider")
+// NewAssemblyAI 创建并返回一个新的 AssemblyAI STT 实例
+func NewAssemblyAI() *STT {
 	cfg, err := config.GetConfig()
 	if err != nil {
-		logger.Fatalf("Failed to get config: %v", err)
+		logger.Fatalf("配置初始化失败: %v", err)
 	}
-	return &AssemblyAI{
-		apiKey: cfg.AssemblyAI.APIKey,
+
+	client := aai.NewClient(cfg.AssemblyAI.APIKey)
+	return &STT{
+		client: client,
 	}
 }
 
-func (a *AssemblyAI) Recognize(audioData []byte) (string, error) {
-	// 将 PCM 数据包装成 WAV 格式
-	wavData, err := wrapPCMDataToWAV(audioData)
-	if err != nil {
-		return "", fmt.Errorf("failed to wrap audio data to WAV: %v", err)
-	}
-	// 上传音频数据
-	uploadURL, err := a.uploadAudioData(wavData)
-	if err != nil {
-		return "", fmt.Errorf("failed to upload audio data: %v", err)
-	}
-	// 请求转录
-	transcriptText, err := a.requestTranscription(uploadURL)
-	if err != nil {
-		return "", fmt.Errorf("failed to transcribe audio: %v", err)
+// Recognize 实现了 stt.Service 接口，使用 AssemblyAI 进行语音识别
+func (s *STT) Recognize(audioData []byte, audioURL string) (string, error) {
+	if audioURL != "" {
+		// 使用提供的 audioURL 调用 AssemblyAI 的转录服务
+		return s.transcribeFromURL(audioURL)
 	}
 
-	// 打印转录文本
-	logger.Infof("Transcription result: %s", transcriptText)
-
-	return transcriptText, nil
+	// 原有的处理流程，直接使用 audioData
+	return s.transcribeFromData(audioData)
 }
 
-func (a *AssemblyAI) uploadAudioData(audioData []byte) (string, error) {
-	url := "https://api.assemblyai.com/v2/upload"
+func (s *STT) transcribeFromURL(audioURL string) (string, error) {
+	ctx := context.Background()
 
-	req, err := http.NewRequest("POST", url, bytes.NewReader(audioData))
+	params := &aai.TranscriptOptionalParams{
+		LanguageCode: "zh",
+	}
+
+	transcript, err := s.client.Transcripts.TranscribeFromURL(ctx, audioURL, params)
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %v", err)
+		return "", fmt.Errorf("转录失败: %v", err)
 	}
 
-	req.Header.Set("Authorization", a.apiKey)
-	req.Header.Set("Content-Type", "audio/wav")
-	req.Header.Set("Transfer-Encoding", "chunked")
+	// 轮询检查转录状态
+	for transcript.Status != "completed" {
+		time.Sleep(1 * time.Second)
 
-	logger.Infof("Uploading audio data, size: %d bytes", len(audioData))
-
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to upload: %v", err)
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	logger.Infof("Upload response status: %d, body: %s", resp.StatusCode, string(body))
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("upload failed with status %d: %s", resp.StatusCode, string(body))
-	}
-
-	var result struct {
-		UploadURL string `json:"upload_url"`
-	}
-
-	if err := json.Unmarshal(body, &result); err != nil {
-		return "", fmt.Errorf("failed to decode response: %v", err)
-	}
-
-	return result.UploadURL, nil
-}
-
-func (a *AssemblyAI) requestTranscription(uploadURL string) (string, error) {
-	transcriptURL := "https://api.assemblyai.com/v2/transcript"
-
-	logger.Infof("Sending transcription request for audio URL: %s", uploadURL)
-
-	requestBody := map[string]interface{}{
-		"audio_url": uploadURL,
-		// "language_code": "zh",
-		"punctuate":   true,
-		"format_text": true,
-	}
-
-	requestBodyBytes, err := json.Marshal(requestBody)
-	if err != nil {
-		return "", err
-	}
-
-	req, err := http.NewRequest("POST", transcriptURL, bytes.NewReader(requestBodyBytes))
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Authorization", a.apiKey)
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("transcription request failed with status %d: %s", resp.StatusCode, string(body))
-	}
-
-	var result struct {
-		ID     string `json:"id"`
-		Status string `json:"status"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", err
-	}
-
-	// 轮询等待转录完成
-	pollURL := fmt.Sprintf("%s/%s", transcriptURL, result.ID)
-	for i := 0; i < 30; i++ { // 最多等待30次，每次3秒
-		time.Sleep(3 * time.Second)
-
-		req, err := http.NewRequest("GET", pollURL, nil)
+		// 使用 transcript.ID 获取最新状态
+		transcript, err = s.client.Transcripts.Get(ctx, *transcript.ID)
 		if err != nil {
-			return "", err
-		}
-		req.Header.Set("Authorization", a.apiKey)
-
-		resp, err := client.Do(req)
-		if err != nil {
-			return "", err
+			return "", fmt.Errorf("获取转录结果失败: %v", err)
 		}
 
-		var pollResult struct {
-			Status string `json:"status"`
-			Text   string `json:"text"`
-			Error  string `json:"error"`
-		}
-
-		if err := json.NewDecoder(resp.Body).Decode(&pollResult); err != nil {
-			resp.Body.Close()
-			return "", err
-		}
-		resp.Body.Close()
-
-		logger.Infof("Transcription status: %s", pollResult.Status)
-
-		switch pollResult.Status {
-		case "completed":
-			// 打印最终转录文本
-			logger.Infof("Final transcription text: %s", pollResult.Text)
-			return pollResult.Text, nil
-		case "error":
-			return "", fmt.Errorf("transcription failed: %s", pollResult.Error)
-		case "processing", "queued":
-			continue
-		default:
-			return "", fmt.Errorf("unknown status: %s", pollResult.Status)
+		if transcript.Status == "error" {
+			return "", fmt.Errorf("转录出错: %s", *transcript.Error)
 		}
 	}
 
-	return "", fmt.Errorf("transcription timeout after 90 seconds")
+	// 确保 Text 字段不为 nil
+	if transcript.Text == nil {
+		return "", fmt.Errorf("转录结果为空")
+	}
+
+	return *transcript.Text, nil
 }
 
-func wrapPCMDataToWAV(pcmData []byte) ([]byte, error) {
-	outBuffer := bytes.NewBuffer(nil)
+func (s *STT) transcribeFromData(audioData []byte) (string, error) {
+	ctx := context.Background()
 
-	const (
-		sampleRate    = 16000
-		numChannels   = 1
-		bitsPerSample = 16
-	)
+	// 首先上传音频数据
+	upload, err := s.client.Upload(ctx, bytes.NewReader(audioData))
+	if err != nil {
+		return "", fmt.Errorf("上传音频数据失败: %v", err)
+	}
 
-	outBuffer.WriteString("RIFF")
-	writeInt32(outBuffer, uint32(len(pcmData)+36))
-	outBuffer.WriteString("WAVE")
-
-	outBuffer.WriteString("fmt ")
-	writeInt32(outBuffer, 16)
-	writeInt16(outBuffer, 1)
-	writeInt16(outBuffer, numChannels)
-	writeInt32(outBuffer, sampleRate)
-	writeInt32(outBuffer, sampleRate*numChannels*bitsPerSample/8)
-	writeInt16(outBuffer, numChannels*bitsPerSample/8)
-	writeInt16(outBuffer, bitsPerSample)
-
-	outBuffer.WriteString("data")
-	writeInt32(outBuffer, uint32(len(pcmData)))
-	outBuffer.Write(pcmData)
-
-	return outBuffer.Bytes(), nil
+	// 使用上传后的 URL 进行转录
+	return s.transcribeFromURL(upload)
 }
 
-func writeInt16(w *bytes.Buffer, value uint16) {
-	w.WriteByte(byte(value))
-	w.WriteByte(byte(value >> 8))
-}
-
-func writeInt32(w *bytes.Buffer, value uint32) {
-	w.WriteByte(byte(value))
-	w.WriteByte(byte(value >> 8))
-	w.WriteByte(byte(value >> 16))
-	w.WriteByte(byte(value >> 24))
+// StreamRecognize 实现实时转录接口
+func (s *STT) StreamRecognize(ctx context.Context, audioDataChan <-chan []byte, transcriptChan chan<- string) error {
+	// AssemblyAI 目前不支持直接的流式处理
+	// 这里我们可以实现一个简单的缓冲处理
+	return fmt.Errorf("AssemblyAI 不支持流式处理")
 }

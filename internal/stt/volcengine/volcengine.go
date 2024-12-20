@@ -48,19 +48,51 @@ func NewVolcengineSTT() *STT {
 	}
 }
 
-func (s *STT) Recognize(audioData []byte) (string, error) {
-	//reqID := uuid.New().String()
+func (s *STT) validateAudioFormat(audioData []byte) error {
+	if len(audioData) == 0 {
+		return fmt.Errorf("音频数据为空")
+	}
+
+	// 添加其他音频格式检查逻辑
+	// 例如检查采样率、位深度等
+
+	return nil
+}
+
+// isFinalResponse 判断响应是否为最终响应
+func isFinalResponse(result map[string]interface{}) bool {
+	// 根据 VolcEngine 的响应结构调整逻辑
+	if isFinal, ok := result["is_final"].(bool); ok {
+		return isFinal
+	}
+	return false
+}
+
+// Recognize 调用 VolcEngine 的 STT API 将音频数据转换为文本
+// 新增 audioURL 参数，但 VolcEngine 不使用该参数
+func (s *STT) Recognize(audioData []byte, audioURL string) (string, error) {
+	if audioURL != "" {
+		logger.Infof("VolcEngine STT 不支持使用 audioURL，忽略该参数")
+	}
+
+	// 添加音频格式验证
+	if err := s.validateAudioFormat(audioData); err != nil {
+		logger.Errorf("音频格式验证失败: %v", err)
+		return "", err
+	}
+
+	// reqID := uuid.New().String()
 	connectID := uuid.New().String()
 
 	header := http.Header{}
 	header.Set("X-Api-Access-Key", s.accessKey)
 	header.Set("X-Api-App-Key", s.appKey)
 	header.Set("X-Api-Resource-Id", s.resourceID)
-	//header.Set("X-Api-Request-Id", reqID)
+	// header.Set("X-Api-Request-Id", reqID)
 	header.Set("X-Api-Connect-Id", connectID)
 
-	logger.Infof("Connecting to WebSocket URL: %s", s.wsURL)
-	logger.Infof("Request Headers: %v", header)
+	logger.Infof("连接到 WebSocket URL: %s", s.wsURL)
+	logger.Infof("请求头: %v", header)
 
 	dialer := websocket.DefaultDialer
 	conn, resp, err := dialer.Dial(s.wsURL, header)
@@ -216,19 +248,18 @@ func (s *STT) Recognize(audioData []byte) (string, error) {
 	for {
 		_, resData, err := conn.ReadMessage()
 		if err != nil {
-			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-				logger.Info("WebSocket 连接正常关闭")
-				break
-			} else {
-				logger.Errorf("读取响应错误: %v", err)
+			if websocket.IsUnexpectedCloseError(err) {
+				logger.Errorf("读取最终响应错误: %v", err)
 				return "", err
 			}
+			break
 		}
 
-		result, err = parseResponse(resData)
+		var result map[string]interface{}
+		err = json.Unmarshal(resData, &result)
 		if err != nil {
-			logger.Errorf("解析响应错误: %v", err)
-			return "", err
+			logger.Errorf("解析最终响应错误: %v", err)
+			continue
 		}
 
 		if errCode, ok := result["error_code"]; ok {
@@ -236,27 +267,17 @@ func (s *STT) Recognize(audioData []byte) (string, error) {
 			return "", fmt.Errorf("服务器返回错误码 %v: %v", errCode, result["error_msg"])
 		}
 
-		logger.Infof("收到响应: %+v", result)
-
-		if payloadMsg, ok := result["payload_msg"]; ok {
-			if payloadMap, ok := payloadMsg.(map[string]interface{}); ok {
-				if resultMap, ok := payloadMap["result"].(map[string]interface{}); ok {
-					if text, ok := resultMap["text"].(string); ok {
-						finalText = text
-						logger.Infof("识别结果: %s", text)
-					}
-				}
-			}
+		if text, ok := result["text"].(string); ok {
+			finalText += text
+			logger.Infof("识别文本: %s", text)
 		}
 
-		if isLast, ok := result["is_last_package"].(bool); ok && isLast {
+		// 使用定义的 isFinalResponse 函数判断是否为最终响应
+		if isFinalResponse(result) {
 			break
 		}
 	}
 
-	if finalText == "" {
-		return "", fmt.Errorf("未在响应中找到识别结果")
-	}
 	return finalText, nil
 }
 

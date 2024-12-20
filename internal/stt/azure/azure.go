@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/telepace/voiceflow/pkg/config"
-	"github.com/telepace/voiceflow/pkg/logger"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/telepace/voiceflow/pkg/config"
+	"github.com/telepace/voiceflow/pkg/logger"
 )
 
 type STT struct {
@@ -20,7 +21,7 @@ type STT struct {
 func NewAzureSTT() *STT {
 	cfg, err := config.GetConfig()
 	if err != nil {
-		logger.Fatalf("配置初始化失败:", err)
+		logger.Fatalf("配置初始化失败: %v", err)
 	}
 	return &STT{
 		apiKey:   cfg.Azure.STTKey,
@@ -30,7 +31,12 @@ func NewAzureSTT() *STT {
 }
 
 // Recognize 调用 Azure 的 STT API 将音频数据转换为文本
-func (a *STT) Recognize(audioData []byte) (string, error) {
+// 新增 audioURL 参数，但 Azure 不使用该参数
+func (a *STT) Recognize(audioData []byte, audioURL string) (string, error) {
+	if audioURL != "" {
+		logger.Infof("Azure STT 不支持使用 audioURL，忽略该参数")
+	}
+
 	req, err := http.NewRequest("POST", a.endpoint, bytes.NewReader(audioData))
 	if err != nil {
 		return "", err
@@ -47,7 +53,7 @@ func (a *STT) Recognize(audioData []byte) (string, error) {
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := ioutil.ReadAll(resp.Body)
-		return "", fmt.Errorf("azure STT error: %s", string(body))
+		return "", fmt.Errorf("Azure STT 错误: %s", string(body))
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -62,5 +68,10 @@ func (a *STT) Recognize(audioData []byte) (string, error) {
 		return "", err
 	}
 
-	return result["DisplayText"].(string), nil
+	text, ok := result["DisplayText"].(string)
+	if !ok {
+		return "", fmt.Errorf("无法解析 Azure STT 的响应")
+	}
+
+	return text, nil
 }

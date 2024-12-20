@@ -12,11 +12,11 @@ minio:
   storage_path: "voiceflow/audio/"
 
 stt:
-  # 可选值：azure、google、local、assemblyai、volcengine、 aws
+  # 可选值：azure、 google、 local、 assemblyai-ws、 volcengine、 aws
   provider: assemblyai
 
 tts:
-  # 可选值：azure、google、local、volcengine
+  # 可选值：azure、 google、 local、 volcengine
   provider: volcengine
 
 llm:
@@ -93,4 +93,4 @@ logging:
   report_caller: true
 
 assemblyai:
-  api_key:
+  api_key: ""
