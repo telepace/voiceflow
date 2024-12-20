@@ -4,21 +4,23 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid" // 用于生成唯一文件名
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/telepace/voiceflow/pkg/config"
-	"github.com/telepace/voiceflow/pkg/logger"
 	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/google/uuid" // 用于生成唯一文件名
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/telepace/voiceflow/pkg/config"
+	"github.com/telepace/voiceflow/pkg/logger"
 )
 
 type MinIOService struct {
-	client     *minio.Client
-	bucketName string
+	client      *minio.Client
+	bucketName  string
+	storagePath string
 }
 
 // NewMinIOService 创建并返回 MinIO 客户端
@@ -38,8 +40,9 @@ func NewMinIOService() *MinIOService {
 	}
 
 	return &MinIOService{
-		client:     minioClient,
-		bucketName: cfg.MinIO.BucketName,
+		client:      minioClient,
+		bucketName:  cfg.MinIO.BucketName,
+		storagePath: cfg.MinIO.StoragePath,
 	}
 }
 
@@ -61,8 +64,8 @@ func (m *MinIOService) StoreAudio(audioData []byte) (string, error) {
 		return "", fmt.Errorf("error writing audio to temp file: %v", err)
 	}
 
-	// 生成唯一文件名
-	objectName := uuid.New().String() + ".wav"
+	// 生成唯一文件名，并添加存储路径前缀
+	objectName := m.storagePath + uuid.New().String() + ".wav"
 
 	// 上传文件到 MinIO
 	info, err := m.client.FPutObject(ctx, m.bucketName, objectName, tempFile.Name(), minio.PutObjectOptions{

@@ -20,6 +20,7 @@ type VolcengineTTS struct {
 	wsURL      string
 	appID      string
 	token      string
+	cluster    string
 	voiceType  string
 	encoding   string
 	speedRatio float64
@@ -38,6 +39,7 @@ func NewVolcengineTTS() *VolcengineTTS {
 		wsURL:      ttsCfg.WsURL,
 		appID:      ttsCfg.AppID,
 		token:      ttsCfg.Token,
+		cluster:    ttsCfg.Cluster,
 		voiceType:  ttsCfg.VoiceType,
 		encoding:   ttsCfg.Encoding,
 		speedRatio: ttsCfg.SpeedRatio,
@@ -70,7 +72,7 @@ func (v *VolcengineTTS) Synthesize(text string) ([]byte, error) {
 		"app": {
 			"appid":   v.appID,
 			"token":   v.token,
-			"cluster": "default",
+			"cluster": v.cluster,
 		},
 		"user": {
 			"uid": fmt.Sprintf("user_%d", time.Now().UnixNano()),

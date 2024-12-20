@@ -4,15 +4,16 @@ server:
 
 minio:
   enabled: true
-  endpoint: ''
-  access_key: ""
-  secret_key: ""
-  bucket_name: 'telepace-pipeline'
+  endpoint: "localhost:9000"
+  access_key: "your_access_key"
+  secret_key: "your_secret_key"
+  bucket_name: "telepace-pipeline"
   secure: true
+  storage_path: "voiceflow/audio/"
 
 stt:
   # 可选值：azure、google、local、assemblyai、volcengine、 aws
-  provider: volcengine
+  provider: assemblyai
 
 tts:
   # 可选值：azure、google、local、volcengine
@@ -65,6 +66,7 @@ volcengine:
     ws_url: "wss://openspeech.bytedance.com/api/v1/tts/ws_binary"
     app_id: "your_app_id"
     token: "your_token"
+    cluster: "volcano_tts"
     voice_type: "zh_female_sajiaonvyou_moon_bigtts"
     encoding: "mp3"
     speed_ratio: 1.0

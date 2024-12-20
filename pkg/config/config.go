@@ -79,6 +79,7 @@ type Config struct {
 			WsURL       string  `mapstructure:"ws_url"`
 			AppID       string  `mapstructure:"app_id"`
 			Token       string  `mapstructure:"token"`
+			Cluster     string  `mapstructure:"cluster"`
 			VoiceType   string  `mapstructure:"voice_type"`
 			Encoding    string  `mapstructure:"encoding"`
 			SpeedRatio  float64 `mapstructure:"speed_ratio"`
@@ -94,6 +95,7 @@ type Config struct {
 		SecretKey  string `mapstructure:"secret_key"`
 		UseSSL     bool   `mapstructure:"use_ssl"`
 		Secure     bool   `mapstructure:"secure"`
+		StoragePath string `mapstructure:"storage_path"`
 	}
 	Logging struct {
 		Level        string
