@@ -75,7 +75,7 @@ volcengine:
 
 # 日志配置
 logging:
-  # 日志级别（选项：debug���调试）、info（信息）、warn（警告）、error（错误）、fatal（致命错误））
+  # 日志级别（选项：debug 调试）、info（信息）、warn（警告）、error（错误）、fatal（致命错误））
   level: "info"
   # 日志格式（选项：json（JSON 格式）、text（文本格式））
   format: "text"

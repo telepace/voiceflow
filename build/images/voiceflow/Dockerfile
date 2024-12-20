@@ -29,5 +29,6 @@ WORKDIR ${TELEPACE_APP}
 EXPOSE 80
 
 COPY --from=builder /usr/bin/voiceflow ./bin/voiceflow
+COPY --from=builder /telepace/app/configs ./configs
 
-ENTRYPOINT ["./bin/voiceflow"]
+ENTRYPOINT ["./bin/voiceflow", "--config", "./configs/config.yaml"]
