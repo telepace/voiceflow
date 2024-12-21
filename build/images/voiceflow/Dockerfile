@@ -26,7 +26,7 @@ FROM ghcr.io/telepace/ai_feedback_production_ubuntu:latest
 
 WORKDIR ${TELEPACE_APP}
 
-EXPOSE 80
+EXPOSE 18080
 
 COPY --from=builder /usr/bin/voiceflow ./bin/voiceflow
 COPY --from=builder /telepace/app/configs ./configs
