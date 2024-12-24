@@ -9,7 +9,9 @@
     <!-- 配置 WebSocket URL -->
     <script>
         const port = window.VOICEFLOW_SERVER_PORT || '18080';
-        const WEBSOCKET_URL = `ws://localhost:${port}/ws`;
+        const WEBSOCKET_URL = window.location.protocol === 'https:' 
+          ? `wss://${window.location.hostname}/ws`
+          : `ws://${window.location.hostname}/ws`;
     </script>
 </head>
 <body>
