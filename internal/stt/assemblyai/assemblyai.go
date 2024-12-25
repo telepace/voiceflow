@@ -45,7 +45,7 @@ func (s *STT) Recognize(audioData []byte, audioURL string) (string, error) {
 func (s *STT) transcribeFromURL(audioURL string) (string, error) {
 	ctx := context.Background()
 
-	// 第一次尝试��使用语言检测
+	// 第一次尝试使用语言检测
 	params := s.buildParams()
 	transcript, err := s.client.Transcripts.TranscribeFromURL(ctx, audioURL, params)
 	if err != nil {
@@ -73,14 +73,17 @@ func (s *STT) transcribeFromURL(audioURL string) (string, error) {
 				if transcript.Error != nil {
 					// 在这里检查语言置信度错误
 					if s.isLanguageConfidenceError(err) && s.cfg.AssemblyAI.DefaultLanguageCode != "" {
-						// 使用默认语言重试
 						logger.Infof("语言置信度低于阈值 %.2f，使用默认语言 %s 重试",
 							s.cfg.AssemblyAI.LanguageConfidenceThreshold,
 							s.cfg.AssemblyAI.DefaultLanguageCode)
 
-						// 构建新的参数，使用默认语言
-						params = s.buildParamsWithDefaultLanguage()
-						return s.transcribeFromURL(audioURL) // 递归调用，使用新参数重试
+						// 使用新参数重新发起转录请求
+						params := s.buildParamsWithDefaultLanguage()
+						transcript, err = s.client.Transcripts.TranscribeFromURL(ctx, audioURL, params)
+						if err != nil {
+							return "", fmt.Errorf("使用默认语言重试失败: %v", err)
+						}
+						continue // 继续轮询新的转录状态
 					}
 					return "", fmt.Errorf("转录出错: %s", *transcript.Error)
 				}
@@ -123,7 +126,7 @@ func (s *STT) StreamRecognize(ctx context.Context, audioDataChan <-chan []byte, 
 	return fmt.Errorf("AssemblyAI 不支持流式处理")
 }
 
-// buildParams 将 config.yaml 中的字段映射到 AssemblyAI 的 TranscriptOptionalParams
+// buildParams ��� config.yaml 中的字段映射到 AssemblyAI 的 TranscriptOptionalParams
 func (s *STT) buildParams() *aai.TranscriptOptionalParams {
 	aaiCfg := s.cfg.AssemblyAI
 
