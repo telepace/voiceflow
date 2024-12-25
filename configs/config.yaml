@@ -76,8 +76,8 @@ volcengine:
 assemblyai:
   api_key: ""         # 你的 AssemblyAI API Key
   model: "best"       # 选用 "best" 或 "nano"
-  language_detection: true
-  language_confidence_threshold: 0.1
+  language_detection: true   # 启用语言自动检测
+  language_confidence_threshold: 0
   language_code: ""   # 如果想固定语言，例如 "en"、"es" 等，可填入对应 ISO 代码
   punctuate: true
   format_text: true
