@@ -45,7 +45,7 @@ func (s *STT) transcribeFromURL(audioURL string) (string, error) {
 	// 首次尝试：启用语言检测
 	params := &aai.TranscriptOptionalParams{
 		LanguageDetection:           aai.Bool(true),
-		LanguageConfidenceThreshold: aai.Float64(0.1),
+		LanguageConfidenceThreshold: aai.Float64(0),
 		FormatText:                  aai.Bool(true),
 		Punctuate:                   aai.Bool(true),
 	}
