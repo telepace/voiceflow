@@ -1,4 +1,3 @@
-// config.go
 package config
 
 import (
@@ -7,6 +6,30 @@ import (
 
 	"github.com/spf13/viper"
 )
+
+// 新增 AssemblyAIConfig，用于在 config.yaml 配置更多可调参数
+type AssemblyAIConfig struct {
+	APIKey                      string   `mapstructure:"api_key"`
+	Model                       string   `mapstructure:"model"` // 可选 "best" 或 "nano"
+	LanguageDetection           bool     `mapstructure:"language_detection"`
+	LanguageConfidenceThreshold float64  `mapstructure:"language_confidence_threshold"`
+	LanguageCode                string   `mapstructure:"language_code"`
+	Punctuate                   bool     `mapstructure:"punctuate"`
+	FormatText                  bool     `mapstructure:"format_text"`
+	Disfluencies                bool     `mapstructure:"disfluencies"`
+	FilterProfanity             bool     `mapstructure:"filter_profanity"`
+	AudioStartFrom              int64    `mapstructure:"audio_start_from"`
+	AudioEndAt                  int64    `mapstructure:"audio_end_at"`
+	SpeechThreshold             float64  `mapstructure:"speech_threshold"`
+	Multichannel                bool     `mapstructure:"multichannel"`
+	BoostParam                  string   `mapstructure:"boost_param"`
+	WordBoost                   []string `mapstructure:"word_boost"`
+	// 这里仅演示一个简单示例的结构体，如果要自定义更多 mapping，可以创建单独结构体
+	CustomSpelling []struct {
+		From []string `mapstructure:"from"`
+		To   string   `mapstructure:"to"`
+	} `mapstructure:"custom_spelling"`
+}
 
 type VolcengineConfig struct {
 	AccessKey  string `mapstructure:"access_key"`
@@ -44,10 +67,8 @@ type Config struct {
 	LLM struct {
 		Provider string
 	}
-	AssemblyAI struct {
-		APIKey string `mapstructure:"api_key"`
-	}
-	OpenAI struct {
+	AssemblyAI AssemblyAIConfig `mapstructure:"assemblyai"` // 新增
+	OpenAI     struct {
 		APIKey  string `mapstructure:"api_key"`
 		BaseURL string `mapstructure:"base_url"`
 	}
@@ -88,13 +109,13 @@ type Config struct {
 		} `mapstructure:"tts"`
 	} `mapstructure:"volcengine"`
 	MinIO struct {
-		Enabled    bool   `mapstructure:"enabled"`
-		BucketName string `mapstructure:"bucket_name"`
-		Endpoint   string `mapstructure:"endpoint"`
-		AccessKey  string `mapstructure:"access_key"`
-		SecretKey  string `mapstructure:"secret_key"`
-		UseSSL     bool   `mapstructure:"use_ssl"`
-		Secure     bool   `mapstructure:"secure"`
+		Enabled     bool   `mapstructure:"enabled"`
+		BucketName  string `mapstructure:"bucket_name"`
+		Endpoint    string `mapstructure:"endpoint"`
+		AccessKey   string `mapstructure:"access_key"`
+		SecretKey   string `mapstructure:"secret_key"`
+		UseSSL      bool   `mapstructure:"use_ssl"`
+		Secure      bool   `mapstructure:"secure"`
 		StoragePath string `mapstructure:"storage_path"`
 	}
 	Logging struct {

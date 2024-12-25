@@ -12,7 +12,7 @@ minio:
   storage_path: "voiceflow/audio/"
 
 stt:
-  # 可选值：azure、 google、 local、 assemblyai-ws、 volcengine、 aws
+  # 可选值：azure、 google、 local、 assemblyai-ws、 volcengine、 aws、 assemblyai
   provider: assemblyai
 
 tts:
@@ -20,7 +20,7 @@ tts:
   provider: volcengine
 
 llm:
-  # 可选值：openai、local
+  # 可选值：openai、 local
   provider: openai
 
 azure:
@@ -33,15 +33,14 @@ google:
   tts_key: "your_google_tts_key"
 
 aws:
-    region: "us-east-1"
-    access_key_id: ''
-    secret_access_key: ''
+  region: "us-east-1"
+  access_key_id: ''
+  secret_access_key: ''
 
 openai:
   api_key: ""
   # OPENAI_BASE_URL='https://api.lqqq.cc/v1'       # Global provider
   # OPENAI_BASE_URL='https://api.chatanywhere.cn'  # International version
-  # OPENAI_BASE_URL='https://api.chatanywhere.tech'  # Domestic version
   # OPENAI_BASE_URL='https://api.chatanywhere.tech'  # Domestic version
   base_url: ""
 
@@ -73,24 +72,48 @@ volcengine:
     volume_ratio: 1.0
     pitch_ratio: 1.0
 
-# 日志配置
-logging:
-  # 日志级别（选项：debug 调试）、info（信息）、warn（警告）、error（错误）、fatal（致命错误））
-  level: "info"
-  # 日志格式（选项：json（JSON 格式）、text（文本格式））
-  format: "text"
-  # 日志文件路径（留空则仅输出到标准输出）
-  filename: ""
-  # 日志文件轮转前的最大大小（单位：MB）
-  max_size: 100
-  # 要保留的旧日志文件的最大数量
-  max_backups: 3
-  # 保留旧日志文件的最大天数
-  max_age: 28
-  # 是否压缩旧日志文件
-  compress: true
-  # 是否在日志中包含调用者信息
-  report_caller: true
-
+# AssemblyAI 相关参数
 assemblyai:
-  api_key: ""
+  api_key: ""         # 你的 AssemblyAI API Key
+  model: "best"       # 选用 "best" 或 "nano"
+  language_detection: true
+  language_confidence_threshold: 0.1
+  language_code: ""   # 如果想固定语言，例如 "en"、"es" 等，可填入对应 ISO 代码
+  punctuate: true
+  format_text: true
+  disfluencies: false
+  filter_profanity: false
+  # 如果指定了这两个值，将只转录音频片段
+  audio_start_from: 0
+  audio_end_at: 0
+  # 如果音频里声音占比小于此阈值则返回错误
+  speech_threshold: 0.0
+  # 是否对多声道音频进行分轨转录
+  multichannel: false
+
+  # 如果需要自定义词汇增强，可在这里指定
+  boost_param: "high"
+  word_boost:
+    - "aws"
+    - "azure"
+    - "google cloud"
+
+  # 自定义拼写示例
+  # from 值不区分大小写，to 只支持单词且区分大小写
+  custom_spelling:
+    - from:
+      - "gettleman"
+      to: "Gettleman"
+    - from:
+      - "sequel"
+      to: "SQL"
+
+logging:
+  level: "info"
+  format: "text"
+  filename: ""
+  max_size: 100
+  max_backups: 3
+  max_age: 28
+  compress: true
+  report_caller: true
