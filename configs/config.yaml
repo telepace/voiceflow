@@ -87,7 +87,7 @@ assemblyai:
   audio_start_from: 0
   audio_end_at: 0
   # 如果音频里声音占比小于此阈值则返回错误
-  speech_threshold: 0.0
+  speech_threshold: 0.3
   # 是否对多声道音频进行分轨转录
   multichannel: false
 
