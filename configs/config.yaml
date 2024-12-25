@@ -67,7 +67,7 @@ volcengine:
     token: ''                                                     # 必须存在字段，值可为空
     cluster: 'volcano_tts'                                        # TTS 集群
     # https://www.volcengine.com/docs/6561/1257544
-    voice_type: 'zh_female_cancan_mars_bigtts'                    # 默认语音类型
+    voice_type: 'BV511_streaming'                    # 默认语音类型
     encoding: 'mp3'                                               # 音频编码
     speed_ratio: 1.0                                              # 语速比例
     volume_ratio: 1.0                                             # 音量比例
