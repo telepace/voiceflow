@@ -67,7 +67,7 @@ volcengine:
     app_id: "your_app_id"
     token: "your_token"
     cluster: "volcano_tts"
-    voice_type: "zh_female_sajiaonvyou_moon_bigtts"
+    voice_type: "zh_female_jitangmeimei_mars_bigtts"
     encoding: "mp3"
     speed_ratio: 1.0
     volume_ratio: 1.0
