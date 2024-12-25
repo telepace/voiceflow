@@ -45,11 +45,26 @@ func (s *STT) Recognize(audioData []byte, audioURL string) (string, error) {
 func (s *STT) transcribeFromURL(audioURL string) (string, error) {
 	ctx := context.Background()
 
-	// 第一次尝试使用语言检测
+	// 第一次尝试：使用语言检测
 	params := s.buildParams()
 	transcript, err := s.client.Transcripts.TranscribeFromURL(ctx, audioURL, params)
 	if err != nil {
-		return "", fmt.Errorf("转录请求失败: %v", err)
+		// 检查是否是语言置信度错误
+		if s.isLanguageConfidenceError(err) && s.cfg.AssemblyAI.DefaultLanguageCode != "" {
+			// 使用默认语言重试
+			logger.Infof("语言置信度低于阈值 %.2f，使用默认语言 %s 重试",
+				s.cfg.AssemblyAI.LanguageConfidenceThreshold,
+				s.cfg.AssemblyAI.DefaultLanguageCode)
+
+			// 构建新的参数，使用默认语言
+			params = s.buildParamsWithDefaultLanguage()
+			transcript, err = s.client.Transcripts.TranscribeFromURL(ctx, audioURL, params)
+			if err != nil {
+				return "", fmt.Errorf("使用默认语言重试失败: %v", err)
+			}
+		} else {
+			return "", fmt.Errorf("转录请求失败: %v", err)
+		}
 	}
 
 	// 使用指数退避策略，轮询转录状态
@@ -67,24 +82,8 @@ func (s *STT) transcribeFromURL(audioURL string) (string, error) {
 			if err != nil {
 				return "", fmt.Errorf("获取转录结果失败: %v", err)
 			}
-
-			// 检查错误状态
 			if transcript.Status == "error" {
 				if transcript.Error != nil {
-					// 在这里检查语言置信度错误
-					if s.isLanguageConfidenceError(err) && s.cfg.AssemblyAI.DefaultLanguageCode != "" {
-						logger.Infof("语言置信度低于阈值 %.2f，使用默认语言 %s 重试",
-							s.cfg.AssemblyAI.LanguageConfidenceThreshold,
-							s.cfg.AssemblyAI.DefaultLanguageCode)
-
-						// 使用新参数重新发起转录请求
-						params := s.buildParamsWithDefaultLanguage()
-						transcript, err = s.client.Transcripts.TranscribeFromURL(ctx, audioURL, params)
-						if err != nil {
-							return "", fmt.Errorf("使用默认语言重试失败: %v", err)
-						}
-						continue // 继续轮询新的转录状态
-					}
 					return "", fmt.Errorf("转录出错: %s", *transcript.Error)
 				}
 				return "", fmt.Errorf("转录出错, 未返回具体错误信息")
@@ -126,7 +125,7 @@ func (s *STT) StreamRecognize(ctx context.Context, audioDataChan <-chan []byte, 
 	return fmt.Errorf("AssemblyAI 不支持流式处理")
 }
 
-// buildParams ��� config.yaml 中的字段映射到 AssemblyAI 的 TranscriptOptionalParams
+// buildParams 将 config.yaml 中的字段映射到 AssemblyAI 的 TranscriptOptionalParams
 func (s *STT) buildParams() *aai.TranscriptOptionalParams {
 	aaiCfg := s.cfg.AssemblyAI
 
@@ -180,8 +179,17 @@ func (s *STT) isLanguageConfidenceError(err error) bool {
 
 // 新增：使用默认语言构建参数
 func (s *STT) buildParamsWithDefaultLanguage() *aai.TranscriptOptionalParams {
-	params := s.buildParams()
-	params.LanguageDetection = aai.Bool(false)
-	params.LanguageCode = aai.TranscriptLanguageCode(s.cfg.AssemblyAI.DefaultLanguageCode)
-	return params
+	// 不再调用 s.buildParams()，防止里面带了 threshold
+	// 自己手动指定二次请求想要的字段
+	return &aai.TranscriptOptionalParams{
+		LanguageDetection: aai.Bool(false),
+		LanguageCode:      aai.TranscriptLanguageCode(s.cfg.AssemblyAI.DefaultLanguageCode),
+		Punctuate:         aai.Bool(true),
+		FormatText:        aai.Bool(true),
+		SpeechThreshold:   aai.Float64(s.cfg.AssemblyAI.SpeechThreshold),
+		Multichannel:      aai.Bool(s.cfg.AssemblyAI.Multichannel),
+		AudioStartFrom:    aai.Int64(s.cfg.AssemblyAI.AudioStartFrom),
+		AudioEndAt:        aai.Int64(s.cfg.AssemblyAI.AudioEndAt),
+		BoostParam:        aai.TranscriptBoostParam(s.cfg.AssemblyAI.BoostParam),
+	}
 }
