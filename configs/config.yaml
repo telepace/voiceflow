@@ -78,7 +78,7 @@ assemblyai:
   api_key: ""         # 你的 AssemblyAI API Key
   model: "best"       # 选用 "best" 或 "nano"
   language_detection: true
-  language_confidence_threshold: 0
+  language_confidence_threshold: 0.8
   default_language_code: "en"
   language_code: ""
   # 要禁用标点符号和文本格式，请在转录配置中将Punctuate和FormatText设置为false
