@@ -69,7 +69,7 @@ volcengine:
     # https://www.volcengine.com/docs/6561/1257544
     voice_type: 'zh_female_cancan_mars_bigtts'                    # 默认语音类型
     encoding: 'mp3'                                               # 音频编码
-    speed_ratio: 1.2                                              # 语速比例
+    speed_ratio: 1.0                                              # 语速比例
     volume_ratio: 1.0                                             # 音量比例
     pitch_ratio: 1.0                                              # 音调比例
 
