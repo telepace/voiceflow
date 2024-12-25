@@ -45,7 +45,7 @@ func (s *STT) Recognize(audioData []byte, audioURL string) (string, error) {
 func (s *STT) transcribeFromURL(audioURL string) (string, error) {
 	ctx := context.Background()
 
-	// 第一次尝试：使用语言检测
+	// 第一次尝试��使用语言检测
 	params := s.buildParams()
 	transcript, err := s.client.Transcripts.TranscribeFromURL(ctx, audioURL, params)
 	if err != nil {
@@ -60,11 +60,13 @@ func (s *STT) transcribeFromURL(audioURL string) (string, error) {
 			params = s.buildParamsWithDefaultLanguage()
 			transcript, err = s.client.Transcripts.TranscribeFromURL(ctx, audioURL, params)
 			if err != nil {
-				return "", fmt.Errorf("使用默认语言重试失败: %v", err)
+				return "", fmt.Errorf("语言置信度低于阈值 %.2f，使用默认语言 %s 重试失败: %v",
+					s.cfg.AssemblyAI.LanguageConfidenceThreshold,
+					s.cfg.AssemblyAI.DefaultLanguageCode,
+					err)
 			}
-		} else {
-			return "", fmt.Errorf("转录请求失败: %v", err)
 		}
+		return "", fmt.Errorf("转录请求失败: %v", err)
 	}
 
 	// 使用指数退避策略，轮询转录状态

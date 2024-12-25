@@ -3,12 +3,14 @@ package message
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/gorilla/websocket"
 	"github.com/telepace/voiceflow/internal/storage"
 	"github.com/telepace/voiceflow/internal/stt"
 	"github.com/telepace/voiceflow/internal/tts"
+	"github.com/telepace/voiceflow/pkg/logger"
 )
 
 type BinaryMessageHandler struct {
@@ -88,12 +90,18 @@ func (h *BinaryMessageHandler) HandleEnd(conn *websocket.Conn, sessionID string)
 	go func() {
 		text, err := h.stt.Recognize(audioData, audioURL)
 		if err != nil {
-			// 发送错误响应
-			conn.WriteJSON(map[string]interface{}{
-				"type":       "recognition_error",
-				"session_id": sessionID,
-				"error":      err.Error(),
-			})
+			// 检查是否是最终错误（重试后仍然失败）
+			if strings.Contains(err.Error(), "使用默认语言重试失败") {
+				conn.WriteJSON(map[string]interface{}{
+					"type":       "recognition_error",
+					"session_id": sessionID,
+					"error":      err.Error(),
+				})
+				return
+			}
+
+			// 如果是其他错误，记录日志但继续等待重试结果
+			logger.Warnf("语音识别出现错误（可能正在重试）: %v", err)
 			return
 		}
 
