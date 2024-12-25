@@ -47,30 +47,30 @@ openai:
 volcengine:
   # 语音识别(STT)配置
   stt:
-    ws_url: ''
-    uid: "test"
-    rate: 16000
-    format: "pcm"
-    bits: 16
-    channel: 1
-    codec: "pcm"
-    access_key: ''
-    app_key: ''
+    ws_url: 'wss://openspeech.bytedance.com/api/v3/sauc/bigmodel'  # 推荐直接配置非敏感信息
+    uid: 'test'                                                   # 用户 ID
+    rate: 16000                                                   # STT 采样率
+    format: 'pcm'                                                 # STT 音频格式
+    bits: 16                                                      # 位深度
+    channel: 1                                                    # 声道数
+    codec: 'pcm'                                                  # 编码格式
+    access_key: ''                                                # 必须存在字段，值可为空
+    app_key: ''                                                   # 必须存在字段，值可为空
     # 小时版：volc.bigasr.sauc.duration
     # 并发版：volc.bigasr.sauc.concurrent
-    resource_id: 'volc.bigasr.sauc.duration'
-  
+    resource_id: 'volc.bigasr.sauc.duration'                      # 资源 ID
+
   # 语音合成(TTS)配置
   tts:
-    ws_url: "wss://openspeech.bytedance.com/api/v1/tts/ws_binary"
-    app_id: "your_app_id"
-    token: "your_token"
-    cluster: "volcano_tts"
-    voice_type: "zh_female_jitangmeimei_mars_bigtts"
-    encoding: "mp3"
-    speed_ratio: 1.0
-    volume_ratio: 1.0
-    pitch_ratio: 1.0
+    ws_url: 'wss://openspeech.bytedance.com/api/v1/tts/ws_binary'  # 推荐直接配置非敏感信息
+    app_id: ''                                                    # 必须存在字段，值可为空
+    token: ''                                                     # 必须存在字段，值可为空
+    cluster: 'volcano_tts'                                        # TTS 集群
+    voice_type: 'zh_female_jitangmeimei_mars_bigtts'              # 默认语音类型
+    encoding: 'mp3'                                               # 音频编码
+    speed_ratio: 1.0                                              # 语速比例
+    volume_ratio: 1.0                                             # 音量比例
+    pitch_ratio: 1.0                                              # 音调比例
 
 # AssemblyAI 相关参数
 assemblyai:
