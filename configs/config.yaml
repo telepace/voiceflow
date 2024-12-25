@@ -96,6 +96,8 @@ assemblyai:
   boost_param: "high"
   word_boost:
     - "aws"
+    - "telepace"
+    - "hello"
     - "azure"
     - "google cloud"
 
