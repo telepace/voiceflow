@@ -29,6 +29,7 @@ type AssemblyAIConfig struct {
 		From []string `mapstructure:"from"`
 		To   string   `mapstructure:"to"`
 	} `mapstructure:"custom_spelling"`
+	DefaultLanguageCode string `mapstructure:"default_language_code"`
 }
 
 type VolcengineConfig struct {

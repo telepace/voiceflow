@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	aai "github.com/AssemblyAI/assemblyai-go-sdk"
@@ -44,13 +45,26 @@ func (s *STT) Recognize(audioData []byte, audioURL string) (string, error) {
 func (s *STT) transcribeFromURL(audioURL string) (string, error) {
 	ctx := context.Background()
 
-	// 根据 config.yaml 中设置的���数，构造 TranscriptOptionalParams
+	// 第一次尝试：使用语言检测
 	params := s.buildParams()
-
-	// 发起转录请求
 	transcript, err := s.client.Transcripts.TranscribeFromURL(ctx, audioURL, params)
 	if err != nil {
-		return "", fmt.Errorf("初次转录请求失败: %v", err)
+		// 检查是否是语言置信度错误
+		if s.isLanguageConfidenceError(err) && s.cfg.AssemblyAI.DefaultLanguageCode != "" {
+			// 使用默认语言重试
+			logger.Infof("语言置信度低于阈值 %.2f，使用默认语言 %s 重试",
+				s.cfg.AssemblyAI.LanguageConfidenceThreshold,
+				s.cfg.AssemblyAI.DefaultLanguageCode)
+
+			// 构建新的参数，使用默认语言
+			params = s.buildParamsWithDefaultLanguage()
+			transcript, err = s.client.Transcripts.TranscribeFromURL(ctx, audioURL, params)
+			if err != nil {
+				return "", fmt.Errorf("使用默认语言重试失败: %v", err)
+			}
+		} else {
+			return "", fmt.Errorf("转录请求失败: %v", err)
+		}
 	}
 
 	// 使用指数退避策略，轮询转录状态
@@ -155,5 +169,18 @@ func (s *STT) buildParams() *aai.TranscriptOptionalParams {
 		params.CustomSpelling = customSpellings
 	}
 
+	return params
+}
+
+// 新增：检查是否是语言置信度错误
+func (s *STT) isLanguageConfidenceError(err error) bool {
+	return strings.Contains(err.Error(), "below the requested confidence threshold value")
+}
+
+// 新增：使用默认语言构建参数
+func (s *STT) buildParamsWithDefaultLanguage() *aai.TranscriptOptionalParams {
+	params := s.buildParams()
+	params.LanguageDetection = aai.Bool(false)
+	params.LanguageCode = aai.TranscriptLanguageCode(s.cfg.AssemblyAI.DefaultLanguageCode)
 	return params
 }
