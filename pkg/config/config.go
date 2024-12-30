@@ -51,6 +51,19 @@ type AWSConfig struct {
 	Region          string `yaml:"region"`
 }
 
+type WhisperConfig struct {
+	APIKey      string  `mapstructure:"api_key"`
+	Endpoint    string  `mapstructure:"endpoint"`
+	Model       string  `mapstructure:"model"`
+	Temperature float64 `mapstructure:"temperature"`
+	VADModel    string  `mapstructure:"vad_model"`
+	MaxRetries  int     `mapstructure:"max_retries"`
+	Timeout     int     `mapstructure:"timeout"`
+	Language    string  `mapstructure:"language"`   // 可选的指定语言
+	Task        string  `mapstructure:"task"`       // transcribe 或 translate
+	BatchSize   int     `mapstructure:"batch_size"` // 音频分段大小(秒)
+}
+
 type Config struct {
 	Server struct {
 		Port      int
@@ -129,6 +142,7 @@ type Config struct {
 		Compress     bool   `mapstructure:"compress"`
 		ReportCaller bool   `mapstructure:"report_caller"`
 	}
+	Whisper WhisperConfig `mapstructure:"whisper"`
 }
 
 var (
