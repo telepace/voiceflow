@@ -43,7 +43,6 @@ func NewWhisperSTT() *WhisperSTT {
 }
 
 func (w *WhisperSTT) Recognize(audioData []byte, audioURL string) (string, error) {
-	// 创建一个 buffer 来写入 multipart 数据
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -56,12 +55,18 @@ func (w *WhisperSTT) Recognize(audioData []byte, audioURL string) (string, error
 		return "", fmt.Errorf("写入音频数据失败: %v", err)
 	}
 
-	// 添加其他参数
-	writer.WriteField("model", w.model)
-	writer.WriteField("temperature", fmt.Sprintf("%f", w.temperature))
-	writer.WriteField("vad_model", w.vadModel)
+	// 添加其他参数，使用正确的模型名称
+	if err := writer.WriteField("model", w.model); err != nil {
+		return "", fmt.Errorf("写入模型参数失败: %v", err)
+	}
+	if err := writer.WriteField("temperature", fmt.Sprintf("%f", w.temperature)); err != nil {
+		return "", fmt.Errorf("写入温度参数失败: %v", err)
+	}
+	if err := writer.WriteField("vad_model", w.vadModel); err != nil {
+		return "", fmt.Errorf("写入 VAD 模型参数失败: %v", err)
+	}
 
-	// 关闭 multipart writer
+	// 添加更详细的错误处理和日志
 	if err := writer.Close(); err != nil {
 		return "", fmt.Errorf("关闭 writer 失败: %v", err)
 	}
@@ -84,21 +89,26 @@ func (w *WhisperSTT) Recognize(audioData []byte, audioURL string) (string, error
 	}
 	defer resp.Body.Close()
 
+	// 读取响应体
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("读取响应失败: %v", err)
+	}
+
 	// 检查响应状态
 	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("API 请求失败，状态码: %d，响应: %s",
-			resp.StatusCode, string(bodyBytes))
+		// 添加更详细的错误信息输出
+		logger.Errorf("API请求失败 - 状态码: %d, 响应内容: %s", resp.StatusCode, string(bodyBytes))
+		return "", fmt.Errorf("API 请求失败，状态码: %d，响应: %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	// 解析响应
 	var result WhisperResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("解析响应失败: %v", err)
+	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+		return "", fmt.Errorf("解析响应失败: %v, 响应内容: %s", err, string(bodyBytes))
 	}
 
-	logger.Infof("语音识别完成，语言: %s, 时长: %.2f秒",
-		result.Language, result.Duration)
+	logger.Infof("语音识别完成，语言: %s, 时长: %.2f秒", result.Language, result.Duration)
 
 	return result.Text, nil
 }

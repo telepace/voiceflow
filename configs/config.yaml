@@ -127,7 +127,7 @@ logging:
 whisper:
   api_key: "your-api-key"
   endpoint: "https://audio-turbo.us-virginia-1.direct.fireworks.ai/v1/audio/transcriptions"
-  model: "accounts/fireworks/models/whisper-v3-turbo"
+  model: "whisper-v3-turbo"
   temperature: 0
   vad_model: "silero"
   max_retries: 3
