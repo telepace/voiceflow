@@ -43,6 +43,11 @@ func NewWhisperSTT() *WhisperSTT {
 }
 
 func (w *WhisperSTT) Recognize(audioData []byte, audioURL string) (string, error) {
+	if w.model != "whisper-v3-turbo" {
+		logger.Warnf("检测到不正确的模型名称: %s，自动修正为: whisper-v3-turbo", w.model)
+		w.model = "whisper-v3-turbo"
+	}
+
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
