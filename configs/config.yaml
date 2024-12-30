@@ -13,7 +13,7 @@ minio:
 
 stt:
   # 可选值：azure、 google、 local、 assemblyai-ws、 volcengine、 aws、 assemblyai、 whisper-v3
-  provider: assemblyai
+  provider: whisper-v3
 
 tts:
   # 可选值：azure、 google、 local、 volcengine
