@@ -128,11 +128,11 @@ go run cmd/main.go
 
 ```mermaid
 graph TD
-    A[前端浏览器] --> B[WebSocket 服务器]
-    B --> C[语音转文本 (STT)]
-    C --> D[大型语言模型 (LLM)]
-    D --> E[文本转语音 (TTS)]
-    E --> F[存储服务 (MinIO)]
+    A["前端浏览器"] --> B["WebSocket 服务器"]
+    B --> C["语音转文本 (STT)"]
+    C --> D["大型语言模型 (LLM)"]
+    D --> E["文本转语音 (TTS)"]
+    E --> F["存储服务 (MinIO)"]
     F --> B
     B --> A
 ```
