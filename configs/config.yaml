@@ -12,8 +12,8 @@ minio:
   storage_path: "voiceflow/audio/"
 
 stt:
-  # 可选值：azure、 google、 local、 assemblyai-ws、 volcengine、 aws、 assemblyai
-  provider: assemblyai
+  # 可选值：azure、 google、 local、 assemblyai-ws、 volcengine、 aws、 assemblyai、 whisper-v3
+  provider: whisper-v3
 
 tts:
   # 可选值：azure、 google、 local、 volcengine
@@ -122,3 +122,16 @@ logging:
   max_age: 28
   compress: true
   report_caller: true
+
+# 添加 Whisper 配置段
+whisper:
+  api_key: "your-api-key"
+  endpoint: "https://audio-turbo.us-virginia-1.direct.fireworks.ai/v1/audio/transcriptions"
+  model: "accounts/fireworks/models/whisper-v3-turbo"
+  temperature: 0
+  vad_model: "silero"
+  max_retries: 3
+  timeout: 30
+  language: "auto"
+  task: "transcribe"
+  batch_size: 30

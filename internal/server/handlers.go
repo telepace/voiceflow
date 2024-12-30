@@ -30,7 +30,10 @@ func InitServices() {
 	if err != nil {
 		logger.Fatalf("配置初始化失败: %v", err)
 	}
-	sttService = stt.NewService(cfg.STT.Provider)
+	sttService, err = stt.NewService(cfg.STT.Provider)
+	if err != nil {
+		logger.Fatalf("STT 服务初始化失败: %v", err)
+	}
 	ttsService = tts.NewService(cfg.TTS.Provider)
 	// llmService = llm.NewService(cfg.LLM.Provider)
 	storageService = storage.NewService()
