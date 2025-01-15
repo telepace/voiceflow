@@ -1,79 +1,103 @@
 // script.js
 // 获取 WebSocket URL
-const ws = new WebSocket(WEBSOCKET_URL);
+let ws;
 
-ws.onopen = () => {
-    console.log('WebSocket 连接已建立');
-    // 在聊天窗口添加提示信息
-    appendSystemMessage('提示：您可以长按麦克风按钮 & 长按 键盘 V 进行录音');
-};
-
-ws.onmessage = function(event) {
-    if (typeof event.data === 'string') {
-        const response = JSON.parse(event.data);
-        console.log('收到 WebSocket 响应:', response);
-        
-        if (response.type) {
-            // 处理带有 type 字段的消息（语音识别等）
-            switch(response.type) {
-                case 'audio_stored':
-                    appendAudioMessage('你', response.audio_url);
-                    break;
-                    
-                case 'recognition_complete':
-                    appendMessage('你', response.text);
-                    break;
-                    
-                case 'recognition_error':
-                    appendSystemMessage(`识别错误: ${response.error}`);
-                    break;
-                    
-                case 'tts_complete':
-                    // 移除"正在生成语音..."的系统消息
-                    const systemMessages = document.querySelectorAll('.message.system');
-                    systemMessages.forEach(msg => {
-                        if (msg.textContent === '正在生成语音...') {
-                            msg.remove();
+// 创建新的 WebSocket 连接的函数
+function createWebSocket() {
+    ws = new WebSocket(WEBSOCKET_URL);
+    
+    ws.onopen = () => {
+        console.log('WebSocket 连接已建立');
+        appendSystemMessage('提示：您可以长按麦克风按钮 & 长按 键盘 V 进行录音');
+    };
+    
+    ws.onmessage = function(event) {
+        if (typeof event.data === 'string') {
+            const response = JSON.parse(event.data);
+            console.log('收到 WebSocket 响应:', response);
+            
+            if (response.type) {
+                // 处理带有 type 字段的消息（语音识别等）
+                switch(response.type) {
+                    case 'audio_stored':
+                        appendAudioMessage('你', response.audio_url);
+                        break;
+                        
+                    case 'recognition_complete':
+                        appendMessage('你', response.text);
+                        if (isOneShotMode) {
+                            appendSystemMessage('单次模式：识别完成，连接将关闭');
+                            // 给用户一点时间看到结果
+                            setTimeout(() => {
+                                ws.close();
+                            }, 2000);
                         }
-                    });
-                    
-                    // 添加 AI 的文本和音频消息
-                    appendMessage('AI', response.text);
-                    appendAudioMessage('AI', response.audio_url);
-                    break;
-                    
-                default:
-                    console.log('Unknown message type:', response.type);
+                        break;
+                        
+                    case 'recognition_error':
+                        appendSystemMessage(`识别错误: ${response.error}`);
+                        break;
+                        
+                    case 'tts_complete':
+                        // 移除"正在生成语音..."的系统消息
+                        const systemMessages = document.querySelectorAll('.message.system');
+                        systemMessages.forEach(msg => {
+                            if (msg.textContent === '正在生成语音...') {
+                                msg.remove();
+                            }
+                        });
+                        
+                        // 添加 AI 的文本和音频消息
+                        appendMessage('AI', response.text);
+                        appendAudioMessage('AI', response.audio_url);
+                        if (isOneShotMode) {
+                            appendSystemMessage('单次模式：语音合成完成，连接将关闭');
+                            setTimeout(() => {
+                                ws.close();
+                            }, 2000);
+                        }
+                        break;
+                        
+                    default:
+                        console.log('Unknown message type:', response.type);
+                }
             }
         }
-    }
-};
-
-ws.onerror = (error) => {
-    console.error('WebSocket 错误:', error);
-};
-
-// 添加重连逻辑
-let reconnectAttempts = 0;
-const maxReconnectAttempts = 5;
-
-ws.onclose = (event) => {
-    console.log('WebSocket connection closed:', event);
+    };
     
-    if (reconnectAttempts < maxReconnectAttempts) {
-        reconnectAttempts++;
-        const timeout = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+    ws.onerror = (error) => {
+        console.error('WebSocket 错误:', error);
+    };
+    
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    
+    ws.onclose = (event) => {
+        console.log('WebSocket connection closed:', event);
         
-        appendSystemMessage(`连接已断开，${timeout/1000}秒后尝试重新连接...`);
+        if (isOneShotMode) {
+            appendSystemMessage('单次模式：连接已关闭');
+            return;
+        }
         
-        setTimeout(() => {
-            ws = new WebSocket(WEBSOCKET_URL);
-            // 重新绑定事件处理器
-        }, timeout);
-    } else {
-        appendSystemMessage('连接已断开，请刷新页面重试');
-    }
-};
+        if (reconnectAttempts < maxReconnectAttempts) {
+            reconnectAttempts++;
+            const timeout = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+            
+            appendSystemMessage(`连接已断开，${timeout/1000}秒后尝试重新连接...`);
+            
+            setTimeout(() => {
+                ws = new WebSocket(WEBSOCKET_URL);
+                // 重新绑定事件处理器
+            }, timeout);
+        } else {
+            appendSystemMessage('连接已断开，请刷新页面重试');
+        }
+    };
+}
+
+// 初始化第一个 WebSocket 连接
+createWebSocket();
 
 const chatWindow = document.getElementById('chat-window');
 const textInput = document.getElementById('text-input');
@@ -109,16 +133,47 @@ function generateSessionId() {
 
 let currentSessionId = null;
 
+// 添加模式切换相关变量和函数
+let isOneShotMode = false;
+const modeToggle = document.getElementById('mode-toggle');
+const modeLabel = document.getElementById('mode-label');
+
+modeToggle.addEventListener('change', function() {
+    isOneShotMode = this.checked;
+    modeLabel.textContent = isOneShotMode ? '单次模式' : '持续模式';
+    appendSystemMessage(`已切换到${modeLabel.textContent}`);
+});
+
 function startRecording() {
     if (isRecording) return;
     
-    // 生成新的会话 ID
+    // 在单次模式下，强制创建新的 WebSocket 连接
+    if (isOneShotMode) {
+        createWebSocket();
+        ws.onopen = () => {
+            startRecordingProcess();
+        };
+        return;
+    }
+    
+    // 非单次模式下的原有逻辑
+    if (!ws || ws.readyState === WebSocket.CLOSED) {
+        createWebSocket();
+        ws.onopen = () => {
+            startRecordingProcess();
+        };
+    } else {
+        startRecordingProcess();
+    }
+}
+
+function startRecordingProcess() {
     currentSessionId = generateSessionId();
     
-    // 发送开始信号
     ws.send(JSON.stringify({
         type: "audio_start",
-        session_id: currentSessionId
+        session_id: currentSessionId,
+        one_shot: isOneShotMode
     }));
     
     navigator.mediaDevices.getUserMedia({ audio: true })
@@ -134,7 +189,6 @@ function startRecording() {
 
             mediaRecorder.ondataavailable = e => {
                 if (e.data && e.data.size > 0) {
-                    // 直接发送二进制数据
                     ws.send(e.data);
                 }
             };
@@ -150,8 +204,14 @@ function startRecording() {
                 // 发送结束信号
                 ws.send(JSON.stringify({
                     type: "audio_end",
-                    session_id: currentSessionId
+                    session_id: currentSessionId,
+                    one_shot: isOneShotMode
                 }));
+                
+                // 如果是单次模式，等待响应后关闭连接
+                if (isOneShotMode) {
+                    appendSystemMessage('单次模式：等待响应中...');
+                }
                 
                 currentSessionId = null;
             };
@@ -231,7 +291,7 @@ function sendTextMessage(text) {
     // 显示发送的消息
     appendMessage('你', text);
     
-    // ��过 WebSocket 发送文字消息
+    // 过 WebSocket 发送文字消息
     ws.send(JSON.stringify({ 
         text: text,
         require_tts: true
