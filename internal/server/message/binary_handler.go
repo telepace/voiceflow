@@ -19,6 +19,7 @@ type BinaryMessageHandler struct {
 	storage      storage.Service
 	audioBuffers map[string]*bytes.Buffer
 	bufferMutex  sync.RWMutex
+	oneShot      bool
 }
 
 func NewBinaryMessageHandler(stt stt.Service, tts tts.Service, storage storage.Service) *BinaryMessageHandler {
@@ -32,7 +33,7 @@ func NewBinaryMessageHandler(stt stt.Service, tts tts.Service, storage storage.S
 }
 
 // HandleStart 处理音频开始信号
-func (h *BinaryMessageHandler) HandleStart(sessionID string) error {
+func (h *BinaryMessageHandler) HandleStart(sessionID string, oneShot bool) error {
 	h.bufferMutex.Lock()
 	defer h.bufferMutex.Unlock()
 
@@ -41,6 +42,7 @@ func (h *BinaryMessageHandler) HandleStart(sessionID string) error {
 	}
 
 	h.audioBuffers[sessionID] = &bytes.Buffer{}
+	h.oneShot = oneShot
 	return nil
 }
 
@@ -63,7 +65,7 @@ func (h *BinaryMessageHandler) HandleAudioData(sessionID string, data []byte) er
 }
 
 // HandleEnd 处理音频结束信号
-func (h *BinaryMessageHandler) HandleEnd(conn *websocket.Conn, sessionID string) error {
+func (h *BinaryMessageHandler) HandleEnd(sessionID string, conn *websocket.Conn) error {
 	// 1. 获取并清理音频数据
 	audioData, err := h.getAndCleanAudioData(sessionID)
 	if err != nil {
@@ -112,6 +114,10 @@ func (h *BinaryMessageHandler) HandleEnd(conn *websocket.Conn, sessionID string)
 			"text":       text,
 		})
 	}()
+
+	if h.oneShot {
+		defer conn.Close()
+	}
 
 	return nil
 }
