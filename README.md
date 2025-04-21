@@ -4,9 +4,8 @@
     </b>
 </h1>
 <h3 align="center" style="border-bottom: none">
-      ⭐️ 基于 Go 语言的实时语音交互框架 ⭐️ <br>
+    ⭐️ Real-time Voice Interaction Framework based on Go ⭐️ <br>
 <h3>
-
 
 <p align=center>
 <a href="https://goreportcard.com/report/github.com/telepace/voiceflow"><img src="https://goreportcard.com/badge/github.com/telepace/voiceflow" alt="A+"></a>
@@ -17,210 +16,204 @@
 <a href="https://golang.org/"><img src="https://img.shields.io/badge/Language-Go-blue.svg"></a>
 </p>
 
-
 <p align="center">
     <a href="./README.md"><b>English</b></a> •
-    <a href="./README_zh-CN.md"><b>中文</b></a>
+    <a href="./README_zh-CN.md"><b>中文 (Chinese)</b></a>
 </p>
 
-## 目录
+## Table of Contents
 
-- [简介](#简介)
-- [快速开始](#快速开始)
-  - [安装](#安装)
-  - [配置](#配置)
-- [用法](#用法)
-- [架构图](#架构图)
-- [支持的操作](#支持的操作)
-- [实践指南](#实践指南)
-- [贡献](#贡献)
-- [许可证](#许可证)
+- [Introduction](#introduction)
+- [Quick Start](#quick-start)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+- [Usage](#usage)
+- [Architecture Diagram](#architecture-diagram)
+- [Supported Operations](#supported-operations) - [Practical Guide](#practical-guide) - [Contributing](#contributing)
+- [License](#license)
 
-## 简介
+## Introduction
 
-voiceflow 是一个基于 Go 语言的开源项目，旨在提供实时语音与大型语言模型（LLM）的交互能力。通过集成多种第三方语音平台和本地模型，voiceflow 支持实时语音转文本（STT）、文本转语音（TTS），以及与 LLM 的智能交互。
+`voiceflow` is an open-source project built with Go, designed to enable real-time voice interaction with Large Language Models (LLMs). By integrating various third-party voice platforms and local models, `voiceflow` supports real-time Speech-to-Text (STT), Text-to-Speech (TTS), and intelligent interaction with LLMs.
 
-## 核心功能 🌟
+## Core Features 🌟
 
-- **实时语音转文本（STT）**：支持集成多家云服务商的 STT 服务和本地模型，实时将用户语音转换为文本。
-- **与 LLM 交互**：将识别的文本直接发送给支持音频的 LLM，获取智能回复。
-- **文本转语音（TTS）**：将 LLM 的回复文本转换为语音，支持多种 TTS 服务和本地模型。
-- **音频存储与访问**：通过 MinIO 等存储服务，将生成的音频文件存储并提供访问路径，供前端实时播放。
-- **可插拔的服务集成**：采用模块化设计，支持各个 STT、TTS 服务和 LLM 的可插拔式集成，方便扩展和定制。🎉
+-   **Real-time Speech-to-Text (STT)**: Integrates with multiple cloud STT services (e.g., Azure, Google) and local models to convert user speech into text in real-time.
+-   **LLM Interaction**: Sends the recognized text directly to audio-capable LLMs to obtain intelligent responses.
+-   **Text-to-Speech (TTS)**: Converts the LLM's text responses back into speech, supporting various TTS services (e.g., Azure, Google) and local models.
+-   **Audio Storage & Access**: Utilizes storage services like MinIO to store generated audio files and provide access URLs for real-time playback on the frontend.
+-   **Pluggable Service Integration**: Features a modular design allowing for pluggable integration of different STT, TTS services, and LLMs, facilitating easy extension and customization. 🎉
 
+## Quick Start
 
+### Installation
 
-## 快速开始
+1.  **Clone the Repository**
 
-### 安装
+    ```bash
+    git clone https://github.com/telepace/voiceflow.git
+    cd voiceflow
+    ```
 
-1. **克隆仓库**
+2.  **Install Dependencies**
 
-   ```bash
-   git clone https://github.com/telepace/voiceflow.git
-   cd voiceflow
-   ```
+    Ensure you have Go 1.16 or higher installed.
 
-2. **安装依赖**
+    ```bash
+    go mod tidy
+    ```
 
-   确保已安装 Go 1.16 或更高版本。
+### Configuration
 
-   ```bash
-   go mod tidy
-   ```
+1.  **Copy the Example Environment File**
 
-### 配置
+    ```bash
+    cp configs/.env.example configs/.env
+    ```
 
-1. **复制示例环境变量文件**
+    **Edit the `.env` file** and fill in the appropriate configuration values:
 
-   ```bash
-   cp configs/.env.example configs/.env
-   ```
+    ```env
+    # Example Environment Variables
+    MINIO_ENDPOINT=play.min.io        # Your MinIO server endpoint
+    MINIO_ACCESS_KEY=youraccesskey    # Your MinIO access key
+    MINIO_SECRET_KEY=yoursecretkey    # Your MinIO secret key
+    AZURE_STT_KEY=yourazuresttkey     # Your Azure Speech-to-Text service key
+    AZURE_TTS_KEY=yourazurettskey     # Your Azure Text-to-Speech service key
+    # Add other necessary keys (e.g., Google Cloud, OpenAI API keys) as needed
+    ```
 
-   **编辑 `.env` 文件** 并填入相应的配置值：
+2.  **Configure `config.yaml`**
 
-   ```env
-   # 环境变量示例
-   MINIO_ENDPOINT=play.min.io
-   MINIO_ACCESS_KEY=youraccesskey
-   MINIO_SECRET_KEY=yoursecretkey
-   AZURE_STT_KEY=yourazuresttkey
-   AZURE_TTS_KEY=yourazurettskey
-   ```
+    Edit `configs/config.yaml` according to your project requirements:
 
-2. **配置 `config.yaml`**
+    ```yaml
+    server:
+      port: 8080          # Port the server will listen on
+      enable_tls: false   # Set to true to enable TLS/SSL
 
-   根据项目需求编辑 `configs/config.yaml`：
+    minio:
+      enabled: true       # Set to true to enable MinIO storage
+      bucket_name: voiceflow-audio # Name of the MinIO bucket for audio files
 
-   ```yaml
-   server:
-     port: 8080
-     enable_tls: false
+    stt: # Speech-to-Text Configuration
+      provider: azure     # Options: azure, google, local (choose your STT provider)
+      # Add provider-specific settings here if needed
 
-   minio:
-     enabled: true
-     bucket_name: voiceflow-audio
+    tts: # Text-to-Speech Configuration
+      provider: google    # Options: azure, google, local (choose your TTS provider)
+      # Add provider-specific settings here if needed
 
-   stt:
-     provider: azure  # 可选值：azure、google、local
+    llm: # Large Language Model Configuration
+      provider: openai    # Options: openai, local (choose your LLM provider)
+      # Add provider-specific settings here (e.g., API key, model name)
 
-   tts:
-     provider: google  # 可选值：azure、google、local
+    logging:
+      level: info         # Logging level (e.g., debug, info, warn, error)
+    ```
 
-   llm:
-     provider: openai  # 可选值：openai、local
+### Start the Application
 
-   logging:
-     level: info
-   ```
-
-### 启动应用
-
-在项目根目录下运行：
+Run the following command in the project root directory:
 
 ```bash
 go run cmd/main.go
+
 ```
 
-查看服务是否正常启动，访问 `http://localhost:8080`。
+Check if the service has started correctly by accessing `http://localhost:8080` (or your configured port).
 
-### 系统架构
+## **Architecture Diagram**
 
-```mermaid
+```
 graph TD
-    A["前端浏览器"] --> B["WebSocket 服务器"]
-    B --> C["语音转文本 (STT)"]
-    C --> D["大型语言模型 (LLM)"]
-    D --> E["文本转语音 (TTS)"]
-    E --> F["存储服务 (MinIO)"]
-    F --> B
-    B --> A
+    A["Frontend (Browser)"] --> B["WebSocket Server (Go Backend)"]
+    B --> C["Speech-to-Text (STT) Module"]
+    C --> D["Large Language Model (LLM) Module"]
+    D --> E["Text-to-Speech (TTS) Module"]
+    E --> F["Storage Service (e.g., MinIO)"]
+    F --> B  ["Provides Audio URL"]
+    B --> A  ["Sends Audio URL/Data"]
+
 ```
 
-- **前端浏览器**：用户通过浏览器录制语音，并通过 WebSocket 发送到服务器。
-- **WebSocket 服务器**：接收前端的音频数据，协调各个服务模块。
-- **语音转文本。(STT)**：将音频数据转换为文本。
-- **大型语言模型 (LLM)**：根据文本生成智能回复。
-- **文本转语音 (TTS)**：将回复文本转换为语音数据。
-- **存储服务 (MinIO)**：存储生成的音频文件，并提供访问 URL。
+- **Frontend (Browser)**: The user records voice input via the browser, sending audio data through a WebSocket connection to the server.
+- **WebSocket Server**: Receives audio data from the frontend and orchestrates the workflow between different service modules.
+- **Speech-to-Text (STT) Module**: Converts the incoming audio data into text.
+- **Large Language Model (LLM) Module**: Processes the text from STT and generates an intelligent response.
+- **Text-to-Speech (TTS) Module**: Converts the LLM's text response back into audio data.
+- **Storage Service (MinIO)**: Stores the generated audio files and provides accessible URLs for playback.
 
-### 目录结构
+## **Directory Structure**
 
-```bash
+```
 voiceflow/
 ├── cmd/
-│   └── main.go            # 应用程序入口
+│   └── main.go              # Application entry point
 ├── configs/
-│   ├── config.yaml        # 业务配置文件
-│   └── .env               # 环境变量文件
+│   ├── config.yaml          # Business logic configuration file
+│   └── .env                 # Environment variables file (sensitive keys, etc.)
 ├── internal/
-│   ├── config/            # 配置加载模块
-│   ├── server/            # WebSocket 服务器
-│   ├── stt/               # 语音转文本模块
-│   ├── tts/               # 文本转语音模块
-│   ├── llm/               # LLM 交互模块
-│   ├── storage/           # 存储模块
-│   ├── models/            # 数据模型
-│   └── utils/             # 工具函数
+│   ├── config/              # Configuration loading module
+│   ├── server/              # WebSocket server implementation
+│   ├── stt/                 # Speech-to-Text module (interfaces, implementations)
+│   ├── tts/                 # Text-to-Speech module (interfaces, implementations)
+│   ├── llm/                 # LLM interaction module (interfaces, implementations)
+│   ├── storage/             # Storage module (interfaces, implementations like MinIO)
+│   ├── models/              # Data models/structs used across the application
+│   └── utils/               # Utility functions
 ├── pkg/
-│   └── logger/            # 日志模块
-├── scripts/               # 构建和部署脚本
-├── go.mod                 # Go 模块文件
-└── README.md              # 项目说明文档
+│   └── logger/              # Logging module setup
+├── scripts/                 # Build and deployment scripts (if any)
+├── go.mod                   # Go modules file (dependencies)
+├── go.sum                   # Go modules checksum file
+└── README.md                # Project description (this file)
+
 ```
 
-### 核心模块
+## **Core Modules**
 
-1. **WebSocket 服务器**
+1. **WebSocket Server**
+    - Implemented using `gorilla/websocket`.
+    - Handles real-time communication with the frontend, receiving audio data and sending back processing results (like audio URLs).
+2. **Speech-to-Text (STT)**
+    - **Interface Definition**: `internal/stt/stt.go` defines the standard interface for STT services.
+    - **Pluggable Implementations**: Supports various providers like Azure, Google Cloud Speech, and potentially local models. New providers can be added by implementing the interface.
+3. **Text-to-Speech (TTS)**
+    - **Interface Definition**: `internal/tts/tts.go` defines the standard interface for TTS services.
+    - **Pluggable Implementations**: Supports various providers like Azure, Google Cloud Text-to-Speech, and potentially local models.
+4. **Large Language Model (LLM)**
+    - **Interface Definition**: `internal/llm/llm.go` defines the interface for interacting with LLMs.
+    - **Pluggable Implementations**: Supports providers like OpenAI (GPT models) and potentially local LLMs.
+5. **Storage Module**
+    - **Interface Definition**: `internal/storage/storage.go` defines the interface for storage services.
+    - **Implementation**: Defaults to using MinIO for object storage (ideal for audio files) but can be adapted to use local file systems or other cloud storage providers.
 
-   使用 `gorilla/websocket` 实现，负责与前端的实时通信，接收音频数据并返回处理结果。
+## **TODO**
 
-2. **语音转文本 (STT)**
+- [ ]  Implement a Message Bus (e.g., Kafka, NATS) for better decoupling between services.
+- [ ]  Integrate a Configuration Center (e.g., Consul, etcd) for dynamic configuration management.
+- [ ]  Provide Containerized Deployment options (Dockerfile, docker-compose.yaml).
+- [ ]  Implement Hooks/Callbacks for extending functionality at various stages of the pipeline.
 
-   - **接口定义**：`internal/stt/stt.go` 定义了 STT 服务的接口。
-   - **可插拔实现**：支持 Azure、Google、本地模型等多种实现方式。
+## **References**
 
-3. **文本转语音 (TTS)**
+- [OpenAI - Hello GPT-4o](https://openai.com/index/hello-gpt-4o/)
+- [Medium - The Differences Between ASR and TTS](https://medium.com/@artificial--intelligence/the-differences-between-asr-and-tts-c85a08269c98#:~:text=We%20are%20familiar%20with%20the,analogous%20to%20the%20human%20mouth.)
 
-   - **接口定义**：`internal/tts/tts.go` 定义了 TTS 服务的接口。
-   - **可插拔实现**：支持 Azure、Google、本地模型等多种实现方式。
+## **Contributing**
 
-4. **大型语言模型 (LLM)**
+We welcome contributions of any kind! Please read [CONTRIBUTING.md](https://gemini.google.com/app/CONTRIBUTING.md) (if available, otherwise follow standard GitHub practices) for more information.
 
-   - **接口定义**：`internal/llm/llm.go` 定义了与 LLM 交互的接口。
-   - **可插拔实现**：支持 OpenAI、本地模型等多种实现方式。
+- **Reporting Issues**: If you find a bug or have a feature suggestion, please submit an issue on GitHub.
+- **Contributing Code**: Fork the repository, make your changes on a separate branch, and submit a Pull Request.
 
-5. **存储模块**
+## **License**
 
-   - **接口定义**：`internal/storage/storage.go` 定义了存储服务的接口。
-   - **实现方式**：默认使用 MinIO 进行音频文件的存储，也支持本地文件系统。
+`voiceflow` is licensed under the [Apache License 2.0](https://gemini.google.com/app/LICENSE).
 
-### TODO
+## **Acknowledgements**
 
-1. 消息总线
-2. 配置中心
-3. 容器化部署
-4. hooks
+Thank you to all the developers who have contributed to this project!
 
-### 参考
-
-- [https://openai.com/index/hello-gpt-4o/](https://openai.com/index/hello-gpt-4o/)
-- [https://medium.com/@artificial--intelligence/the-differences-between-asr-and-tts-c85a08269c98](https://medium.com/@artificial--intelligence/the-differences-between-asr-and-tts-c85a08269c98#:~:text=We%20are%20familiar%20with%20the,analogous%20to%20the%20human%20mouth.)
-
-### 参与贡献
-
-我们欢迎任何形式的贡献！请阅读 CONTRIBUTING.md 了解更多信息。
-
-- **提交问题**：如果您发现了 Bug，或者有新的功能建议，请在 Issues 中提交。
-- **贡献代码**：Fork 本仓库，在您的分支上进行修改，提交 Pull Request。
-
-### 开源协议
-
-voiceflow 使用 [MIT](./LICENSE) 开源协议。
-
-### 致谢
-
-感谢所有为本项目做出贡献的开发者！
-
-<a href="https://github.com/telepace/voiceflow/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=telepace/voiceflow" />
+<img src="https://contrib.rocks/image?repo=telepace/voiceflow" />
