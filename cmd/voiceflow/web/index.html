@@ -10,8 +10,8 @@
     <script>
         const port = window.VOICEFLOW_SERVER_PORT || '18080';
         const WEBSOCKET_URL = window.location.protocol === 'https:' 
-          ? `wss://${window.location.hostname}/ws`
-          : `ws://${window.location.hostname}/ws`;
+          ? `wss://${window.location.host}/ws`
+          : `ws://${window.location.host}/ws`;
     </script>
 </head>
 <body>
